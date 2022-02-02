@@ -749,8 +749,8 @@ HTMLWidgets.widget({
           throw 'The editable parameter must be "cell", "row", "column", or "all"';
       }
 var disableCols = data.editable.disable ? data.editable.disable.columns : null;
-      var numericCols = data.editable.numeric;
-      var areaCols = data.editable.area;
+var numericCols = data.editable.numeric;
+var areaCols = data.editable.area;
       for (var i = 0; i < target.length; i++) {
         (function(cell, current) {
           var $cell = $(cell), html = $cell.html();
@@ -789,8 +789,18 @@ var disableCols = data.editable.disable ? data.editable.disable.columns : null;
               $cell.html(html);
             }
             $input.remove();
-          }).on('blur', function() {
-            if (!changed) $input.trigger('change');
+          }).on('blur', function(e) {
+            var valueNew = $input.val();
+            if (valueNew != value) {
+              _cell.data(valueNew);
+              if (HTMLWidgets.shinyMode) {
+                changeInput('cell_edit', [cellInfo(cell)], 'DT.cellInfo', null, {priority: 'event'});
+              }
+              // for server-side processing, users have to call replaceData() to update the table
+              if (!server) table.draw(false);
+            } else {
+              $cell.html(html);
+            }
           }).on('keyup', function(e) {
             // hit Escape to cancel editing
             if (e.keyCode === 27) $input.trigger('blur');

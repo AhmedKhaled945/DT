@@ -783,18 +783,22 @@ HTMLWidgets.widget({
           if (cell === current) $input.focus();
           $input.css('width', '100%');
 
-          if (immediate) $input.on('blur', function(e) {
+          if (immediate) $input.on('change', function() {
+            changed = true;
             var valueNew = $input.val();
             if (valueNew != value) {
               _cell.data(valueNew);
               if (HTMLWidgets.shinyMode) {
-                changeInput('cell_edit', [cellInfo(cell)], 'DT.cellInfo', null, {priority: 'event'});
+                changeInput('cell_edit', [cellInfo(cell)], 'DT.cellInfo', null, {priority: "event"});
               }
               // for server-side processing, users have to call replaceData() to update the table
               if (!server) table.draw(false);
             } else {
               $cell.html(html);
             }
+            $input.remove();
+          }).on('blur', function() {
+            if (!changed) $input.trigger('change');
           }).on('keyup', function(e) {
             // hit Escape to cancel editing
             if (e.keyCode === 27) $input.trigger('blur');

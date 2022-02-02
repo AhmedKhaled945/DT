@@ -17,10 +17,9 @@ var markInterval = function(d, digits, interval, mark, decMark, precision) {
   return xv.join(decMark);
 };
 
-DTWidget.formatCurrency = function(data, currency, digits, interval, mark, decMark, before, zeroPrint) {
+DTWidget.formatCurrency = function(data, currency, digits, interval, mark, decMark, before) {
   var d = parseFloat(data);
   if (isNaN(d)) return '';
-  if (zeroPrint !== null && d === 0.0) return zeroPrint;
   var res = markInterval(d, digits, interval, mark, decMark);
   res = before ? (/^-/.test(res) ? '-' + currency + res.replace(/^-/, '') : currency + res) :
     res + currency;
@@ -33,24 +32,21 @@ DTWidget.formatString = function(data, prefix, suffix) {
   return prefix + d + suffix;
 };
 
-DTWidget.formatPercentage = function(data, digits, interval, mark, decMark, zeroPrint) {
+DTWidget.formatPercentage = function(data, digits, interval, mark, decMark) {
   var d = parseFloat(data);
   if (isNaN(d)) return '';
-  if (zeroPrint !== null && d === 0.0) return zeroPrint;
   return markInterval(d * 100, digits, interval, mark, decMark) + '%';
 };
 
-DTWidget.formatRound = function(data, digits, interval, mark, decMark, zeroPrint) {
+DTWidget.formatRound = function(data, digits, interval, mark, decMark) {
   var d = parseFloat(data);
   if (isNaN(d)) return '';
-  if (zeroPrint !== null && d === 0.0) return zeroPrint;
   return markInterval(d, digits, interval, mark, decMark);
 };
 
-DTWidget.formatSignif = function(data, digits, interval, mark, decMark, zeroPrint) {
+DTWidget.formatSignif = function(data, digits, interval, mark, decMark) {
   var d = parseFloat(data);
   if (isNaN(d)) return '';
-  if (zeroPrint !== null && d === 0.0) return zeroPrint;
   return markInterval(d, digits, interval, mark, decMark, true);
 };
 
@@ -473,10 +469,10 @@ HTMLWidgets.widget({
             'background-color': '#fff',
             'border': '1px #ddd solid',
             'border-radius': '4px',
-            'padding': data.vertical ? '35px 20px': '20px 20px 10px 20px'
+            'padding': '20px 20px 10px 20px'
           });
           var $spans = $x0.children('span').css({
-            'margin-top': data.vertical ? '0' : '10px',
+            'margin-top': '10px',
             'white-space': 'nowrap'
           });
           var $span1 = $spans.first(), $span2 = $spans.last();
@@ -503,9 +499,9 @@ HTMLWidgets.widget({
               // first, make sure the slider div leaves at least 20px between
               // the two (slider value) span's
               $x0.width(Math.max(160, $span1.outerWidth() + $span2.outerWidth() + 20));
-              // then, if the input is really wide or slider is vertical,
-              // make the slider the same width as the input
-              if ($x0.outerWidth() < $input.outerWidth() || data.vertical) {
+              // then, if the input is really wide, make the slider the same
+              // width as the input
+              if ($x0.outerWidth() < $input.outerWidth()) {
                 $x0.outerWidth($input.outerWidth());
               }
               // make sure the slider div does not reach beyond the right margin
@@ -570,10 +566,6 @@ HTMLWidgets.widget({
           };
           var opts = type === 'date' ? { step: 60 * 60 * 1000 } :
                      type === 'integer' ? { step: 1 } : {};
-
-          opts.orientation = data.vertical ? 'vertical': 'horizontal';
-          opts.direction = data.vertical ? 'rtl': 'ltr';
-
           filter = $x.noUiSlider($.extend({
             start: [r1, r2],
             range: {min: r1, max: r2},
@@ -757,26 +749,17 @@ HTMLWidgets.widget({
           throw 'The editable parameter must be "cell", "row", "column", or "all"';
       }
       var disableCols = data.editable.disable ? data.editable.disable.columns : null;
-      var numericCols = data.editable.numeric;
-      var areaCols = data.editable.area;
       for (var i = 0; i < target.length; i++) {
         (function(cell, current) {
           var $cell = $(cell), html = $cell.html();
-          var _cell = table.cell(cell), value = _cell.data(), index = _cell.index().column;
-          var $input;
-          if (inArray(index, numericCols)) {
-            $input = $('<input type="number">');
-          } else if (inArray(index, areaCols)) {
-            $input = $('<textarea></textarea>');
-          } else {
-            $input = $('<input type="text">');
-          }
+          var _cell = table.cell(cell), value = _cell.data();
+          var $input = $('<input type="text">'), changed = false;
           if (!immediate) {
             $cell.data('input', $input).data('html', html);
             $input.attr('title', 'Hit Ctrl+Enter to finish editing, or Esc to cancel');
           }
           $input.val(value);
-          if (inArray(index, disableCols)) {
+          if (inArray(_cell.index().column, disableCols)) {
             $input.attr('readonly', '').css('filter', 'invert(25%)');
           }
           $cell.empty().append($input);

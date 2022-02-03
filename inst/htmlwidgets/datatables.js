@@ -17,52 +17,54 @@ var markInterval = function(d, digits, interval, mark, decMark, precision) {
   return xv.join(decMark);
 };
 
-DTWidget.formatCurrency = function(data, currency, digits, interval, mark, decMark, before) {
-  var d = parseFloat(data);
-  if (isNaN(d)) return '';
+DTWidget.formatCurrency = function(thiz, row, data, col, currency, digits, interval, mark, decMark, before) {
+  var d = parseFloat(data[col]);
+  if (isNaN(d)) return;
   var res = markInterval(d, digits, interval, mark, decMark);
   res = before ? (/^-/.test(res) ? '-' + currency + res.replace(/^-/, '') : currency + res) :
     res + currency;
-  return res;
+  $(thiz.api().cell(row, col).node()).html(res);
 };
 
-DTWidget.formatString = function(data, prefix, suffix) {
-  var d = data;
-  if (d === null) return '';
-  return prefix + d + suffix;
+DTWidget.formatString = function(thiz, row, data, col, prefix, suffix) {
+  var d = data[col];
+  if (d === null) return;
+  $(thiz.api().cell(row, col).node()).html(prefix + d + suffix);
 };
 
-DTWidget.formatPercentage = function(data, digits, interval, mark, decMark) {
-  var d = parseFloat(data);
-  if (isNaN(d)) return '';
-  return markInterval(d * 100, digits, interval, mark, decMark) + '%';
+DTWidget.formatPercentage = function(thiz, row, data, col, digits, interval, mark, decMark) {
+  var d = parseFloat(data[col]);
+  if (isNaN(d)) return;
+  $(thiz.api().cell(row, col).node())
+  .html(markInterval(d * 100, digits, interval, mark, decMark) + '%');
 };
 
-DTWidget.formatRound = function(data, digits, interval, mark, decMark) {
-  var d = parseFloat(data);
-  if (isNaN(d)) return '';
-  return markInterval(d, digits, interval, mark, decMark);
+DTWidget.formatRound = function(thiz, row, data, col, digits, interval, mark, decMark) {
+  var d = parseFloat(data[col]);
+  if (isNaN(d)) return;
+  $(thiz.api().cell(row, col).node()).html(markInterval(d, digits, interval, mark, decMark));
 };
 
-DTWidget.formatSignif = function(data, digits, interval, mark, decMark) {
-  var d = parseFloat(data);
-  if (isNaN(d)) return '';
-  return markInterval(d, digits, interval, mark, decMark, true);
+DTWidget.formatSignif = function(thiz, row, data, col, digits, interval, mark, decMark) {
+  var d = parseFloat(data[col]);
+  if (isNaN(d)) return;
+  $(thiz.api().cell(row, col).node())
+    .html(markInterval(d, digits, interval, mark, decMark, true));
 };
 
-DTWidget.formatDate = function(data, method, params) {
-  var d = data;
-  if (d === null) return '';
+DTWidget.formatDate = function(thiz, row, data, col, method, params) {
+  var d = data[col];
+  if (d === null) return;
   // (new Date('2015-10-28')).toDateString() may return 2015-10-27 because the
   // actual time created could be like 'Tue Oct 27 2015 19:00:00 GMT-0500 (CDT)',
   // i.e. the date-only string is treated as UTC time instead of local time
-  if ((method === 'toDateString' || method === 'toLocaleDateString') && /^\d{4,}\D\d{2}\D\d{2}$/.test(d)) {
+  if (method === 'toDateString' && /^\d{4,}\D\d{2}\D\d{2}$/.test(d)) {
     d = d.split(/\D/);
     d = new Date(d[0], d[1] - 1, d[2]);
   } else {
     d = new Date(d);
   }
-  return d[method].apply(d, params);
+  $(thiz.api().cell(row, col).node()).html(d[method].apply(d, params));
 };
 
 window.DTWidget = DTWidget;
@@ -134,6 +136,16 @@ HTMLWidgets.widget({
       instance.ctselectHandle.setGroup(crosstalkOptions.group);
     }
 
+    // If we are in a flexdashboard scroll layout then we:
+    //  (a) Always want to use pagination (otherwise we'll have
+    //      a "double scroll bar" effect on the phone); and
+    //  (b) Never want to fill the container (we want the pagination
+    //      level to determine the size of the container)
+    if (window.FlexDashboard && !window.FlexDashboard.isFillPage()) {
+      data.options.bPaginate = true;
+      data.fillContainer = false;
+    }
+
     // if we are in the viewer then we always want to fillContainer and
     // and autoHideNavigation (unless the user has explicitly set these)
     if (window.HTMLWidgets.viewerMode) {
@@ -155,9 +167,6 @@ HTMLWidgets.widget({
     if (data.class) $table.addClass(data.class);
     if (data.caption) $table.prepend(data.caption);
 
-    if (!data.selection) data.selection = {
-      mode: 'none', selected: null, target: 'row', selectable: null
-    };
     if (HTMLWidgets.shinyMode && data.selection.mode !== 'none' &&
         data.selection.target === 'row+column') {
       if ($table.children('tfoot').length === 0) {
@@ -197,7 +206,7 @@ HTMLWidgets.widget({
 
       // if we aren't paginating then move around the info/filter controls
       // to save space at the bottom and rephrase the info callback
-      if (data.options.paging === false) {
+      if (data.options.bPaginate === false) {
 
         // we know how to do this cleanly for bootstrap, not so much
         // for other themes/layouts
@@ -214,20 +223,17 @@ HTMLWidgets.widget({
     }
 
     // auto hide navigation if requested
-    // Note, this only works on client-side processing mode as on server-side,
-    // cells (data.data) is null; In addition, we require the pageLength option
-    // being provided explicitly to enable this. Despite we may be able to deduce
-    // the default value of pageLength, it may complicate things so we'd rather
-    // put this responsiblity to users and warn them on the R side.
-    if (data.autoHideNavigation === true && data.options.paging !== false) {
-      // strip all nav if length >= cells
-      if ((cells instanceof Array) && data.options.pageLength >= cells.length)
-        options.dom = bootstrapActive ? "<'row'<'col-sm-12'tr>>" : "t";
-      // alternatively lean things out for flexdashboard mobile portrait
-      else if (bootstrapActive && window.FlexDashboard && window.FlexDashboard.isMobilePhone())
-        options.dom = "<'row'<'col-sm-12'f>>" +
-                      "<'row'<'col-sm-12'tr>>"  +
-                      "<'row'<'col-sm-12'p>>";
+    if (data.autoHideNavigation === true) {
+      if (bootstrapActive && data.options.bPaginate !== false) {
+        // strip all nav if length >= cells
+        if ((cells instanceof Array) && data.options.iDisplayLength >= cells.length)
+          options.dom = "<'row'<'col-sm-12'tr>>";
+        // alternatively lean things out for flexdashboard mobile portrait
+        else if (window.FlexDashboard && window.FlexDashboard.isMobilePhone())
+          options.dom = "<'row'<'col-sm-12'f>>" +
+                        "<'row'<'col-sm-12'tr>>"  +
+                        "<'row'<'col-sm-12'p>>";
+      }
     }
 
     $.extend(true, options, data.options || {});
@@ -251,16 +257,7 @@ HTMLWidgets.widget({
       options.ajax.dataSrc = function(json) {
         DT_rows_all = $.makeArray(json.DT_rows_all);
         DT_rows_current = $.makeArray(json.DT_rows_current);
-        var data = json.data;
-        if (!colReorderEnabled()) return data;
-        var table = $table.DataTable(), order = table.colReorder.order(), flag = true, i, j, row;
-        for (i = 0; i < order.length; ++i) if (order[i] !== i) flag = false;
-        if (flag) return data;
-        for (i = 0; i < data.length; ++i) {
-          row = data[i].slice();
-          for (j = 0; j < order.length; ++j) data[i][j] = row[order[j]];
-        }
-        return data;
+        return json.data;
       };
     }
 
@@ -268,11 +265,7 @@ HTMLWidgets.widget({
     if (instance.fillContainer) $table.on('init.dt', function(e) {
       thiz.fillAvailableHeight(el, $(el).innerHeight());
     });
-    // If the page contains serveral datatables and one of which enables colReorder,
-    // the table.colReorder.order() function will exist but throws error when called.
-    // So it seems like the only way to know if colReorder is enabled or not is to
-    // check the options.
-    var colReorderEnabled = function() { return "colReorder" in options; };
+
     var table = $table.DataTable(options);
     $el.data('datatable', table);
 
@@ -394,27 +387,11 @@ HTMLWidgets.widget({
 
         // remove the overflow: hidden attribute of the scrollHead
         // (otherwise the scrolling table body obscures the filters)
-        // The workaround and the discussion from
-        // https://github.com/rstudio/DT/issues/554#issuecomment-518007347
-        // Otherwise the filter selection will not be anchored to the values
-        // when the columns number is many and scrollX is enabled.
         var scrollHead = $(el).find('.dataTables_scrollHead,.dataTables_scrollFoot');
-        var cssOverflowHead = scrollHead.css('overflow');
-        var scrollBody = $(el).find('.dataTables_scrollBody');
-        var cssOverflowBody = scrollBody.css('overflow');
-        var scrollTable = $(el).find('.dataTables_scroll');
-        var cssOverflowTable = scrollTable.css('overflow');
-        if (cssOverflowHead === 'hidden') {
+        var cssOverflow = scrollHead.css('overflow');
+        if (cssOverflow === 'hidden') {
           $x.on('show hide', function(e) {
-            if (e.type === 'show') {
-              scrollHead.css('overflow', 'visible');
-              scrollBody.css('overflow', 'visible');
-              scrollTable.css('overflow-x', 'scroll');
-            } else {
-              scrollHead.css('overflow', cssOverflowHead);
-              scrollBody.css('overflow', cssOverflowBody);
-              scrollTable.css('overflow-x', cssOverflowTable);
-            }
+            scrollHead.css('overflow', e.type === 'show' ? '' : cssOverflow);
           });
           $x.css('z-index', 25);
         }
@@ -450,7 +427,9 @@ HTMLWidgets.widget({
             }
           });
           if (searchCol) filter[0].selectize.setValue(JSON.parse(searchCol));
-          filter[0].selectize.on('blur', function() {
+          // an ugly hack to deal with shiny: for some reason, the onBlur event
+          // of selectize does not work in shiny
+          $x.find('div > div.selectize-input > input').on('blur', function() {
             $x.hide().trigger('hide'); $input.parent().show(); $input.trigger('blur');
           });
           filter.next('div').css('margin-bottom', 'auto');
@@ -487,12 +466,6 @@ HTMLWidgets.widget({
             // to avoid problems like 3.423/100 -> 0.034230000000000003
             return (x / scale).toFixed(d);
           };
-          var slider_min = function() {
-            return filter.noUiSlider('options').range.min;
-          };
-          var slider_max = function() {
-            return filter.noUiSlider('options').range.max;
-          };
           $input.on({
             focus: function() {
               $x0.show().trigger('show');
@@ -515,7 +488,7 @@ HTMLWidgets.widget({
               $x0.hide().trigger('hide');
             },
             input: function() {
-              if ($input.val() === '') filter.val([slider_min(), slider_max()]);
+              if ($input.val() === '') filter.val([r1, r2]);
             },
             change: function() {
               var v = $input.val().replace(/\s/g, '');
@@ -525,8 +498,8 @@ HTMLWidgets.widget({
                 $input.parent().addClass('has-error');
                 return;
               }
-              if (v[0] === '') v[0] = slider_min();
-              if (v[1] === '') v[1] = slider_max();
+              if (v[0] === '') v[0] = r1;
+              if (v[1] === '') v[1] = r2;
               $input.parent().removeClass('has-error');
               // treat date as UTC time at midnight
               var strTime = function(x) {
@@ -542,18 +515,16 @@ HTMLWidgets.widget({
                 v[0] = strTime(v[0]);
                 v[1] = strTime(v[1]);
               }
-              if (v[0] != slider_min()) v[0] *= scale;
-              if (v[1] != slider_max()) v[1] *= scale;
+              if (v[0] != r1) v[0] *= scale;
+              if (v[1] != r2) v[1] *= scale;
               filter.val(v);
             }
           });
-          var formatDate = function(d, isoFmt) {
+          var formatDate = function(d) {
             d = scaleBack(d, scale);
             if (type === 'number') return d;
             if (type === 'integer') return parseInt(d);
             var x = new Date(+d);
-            var fmt = ('filterDateFmt' in data) ? data.filterDateFmt[i] : undefined;
-            if (fmt !== undefined && isoFmt === false) return x[fmt.method].apply(x, fmt.params);
             if (type === 'date') {
               var pad0 = function(x) {
                 return ('0' + x).substr(-2, 2);
@@ -590,14 +561,11 @@ HTMLWidgets.widget({
             }
             r1  = t1; r2 = t2;
           })();
-          var updateSliderText = function(v1, v2) {
-            $span1.text(formatDate(v1, false)); $span2.text(formatDate(v2, false));
-          };
-          updateSliderText(r1, r2);
+          $span1.text(formatDate(r1)); $span2.text(formatDate(r2));
           var updateSlider = function(e) {
             var val = filter.val();
             // turn off filter if in full range
-            $td.data('filter', val[0] > slider_min() || val[1] < slider_max());
+            $td.data('filter', val[0] > r1 || val[1] < r2);
             var v1 = formatDate(val[0]), v2 = formatDate(val[1]), ival;
             if ($td.data('filter')) {
               ival = v1 + ' ... ' + v2;
@@ -605,7 +573,7 @@ HTMLWidgets.widget({
             } else {
               $input.attr('title', '').val('');
             }
-            updateSliderText(val[0], val[1]);
+            $span1.text(v1); $span2.text(v2);
             if (e.type === 'slide') return;  // no searching when sliding only
             if (server) {
               table.column(i).search($td.data('filter') ? ival : '').draw();
@@ -640,29 +608,22 @@ HTMLWidgets.widget({
           if (typeof filter === 'undefined' || !$td.data('filter')) return true;
 
           var r = filter.val(), v, r0, r1;
-          var i_data = function(i) {
-            if (!colReorderEnabled()) return i;
-            var order = table.colReorder.order(), k;
-            for (k = 0; k < order.length; ++k) if (order[k] === i) return k;
-            return i; // in theory it will never be here...
-          }
-          v = data[i_data(i)];
           if (type === 'number' || type === 'integer') {
-            v = parseFloat(v);
+            v = parseFloat(data[i]);
             // how to handle NaN? currently exclude these rows
             if (isNaN(v)) return(false);
             r0 = parseFloat(scaleBack(r[0], scale))
             r1 = parseFloat(scaleBack(r[1], scale));
             if (v >= r0 && v <= r1) return true;
           } else if (type === 'date' || type === 'time') {
-            v = new Date(v);
+            v = new Date(data[i]);
             r0 = new Date(r[0] / scale); r1 = new Date(r[1] / scale);
             if (v >= r0 && v <= r1) return true;
           } else if (type === 'factor') {
-            if (r.length === 0 || inArray(v, r)) return true;
+            if (r.length === 0 || inArray(data[i], r)) return true;
           } else if (type === 'logical') {
             if (r.length === 0) return true;
-            if (inArray(v === '' ? 'na' : v, r)) return true;
+            if (inArray(data[i] === '' ? 'na' : data[i], r)) return true;
           }
           return false;
         };
@@ -692,7 +653,7 @@ HTMLWidgets.widget({
 
       // don't highlight the "not found" row, so we get the rows using the api
       if (table.rows({ filter: 'applied' }).data().length === 0) return;
-      // highlight global search keywords
+      // highlight gloal search keywords
       body.highlight($.trim(table.search()).split(/\s+/));
       // then highlight keywords from individual column filters
       if (filterRow) filterRow.each(function(i, td) {
@@ -714,10 +675,6 @@ HTMLWidgets.widget({
         table.off('draw.dt.dth column-visibility.dt.dth column-reorder.dt.dth');
       });
 
-      // Set the option for escaping regex characters in our search string.  This will be used
-      // for all future matching.
-      jQuery.fn.highlight.options.escapeRegex = (!options.search || !options.search.regex);
-
       // initial highlight for state saved conditions and initial states
       highlight();
     }
@@ -725,115 +682,141 @@ HTMLWidgets.widget({
     // run the callback function on the table instance
     if (typeof data.callback === 'function') data.callback(table);
 
-    // double click to edit the cell, row, column, or all cells
-    if (data.editable) table.on('dblclick.dt', 'tbody td', function(e) {
-      // only bring up the editor when the cell itself is dbclicked, and ignore
-      // other dbclick events bubbled up (e.g. from the <input>)
-      if (e.target !== this) return;
-      var target = [], immediate = false;
-      switch (data.editable.target) {
-        case 'cell':
-          target = [this];
-          immediate = true;  // edit will take effect immediately
-          break;
-        case 'row':
-          target = table.cells(table.cell(this).index().row, '*').nodes();
-          break;
-        case 'column':
-          target = table.cells('*', table.cell(this).index().column).nodes();
-          break;
-        case 'all':
-          target = table.cells().nodes();
-          break;
-        default:
-          throw 'The editable parameter must be "cell", "row", "column", or "all"';
+    // editor is enabled
+    if (data.editable) {
+      var editorNextCell = null; // declare variable for next cell to be acivated by the tab key
+      var options = table.init(); // load table options
+      if ('editType' in options) {
+        for (var key in options.editType) {
+          colIndex = parseInt(key);
+          if (table.column(0).header().innerHTML == ' ')
+            colIndex = colIndex + 1;
+          $(table.column(colIndex).header()).attr('data-editortype', options.editType[key]).attr('data-editoroptions', JSON.stringify(options.editAttribs[key])); // set column editor attributes
+        }
+      } else {
+        table.columns().every(function() {
+          if (this.header().innerHTML != ' ')
+            $(this.header()).attr('data-editortype', 'text').attr('data-editoroptions', JSON.stringify({placeholder: this.header().innerHTML})); // set column editor attributes
+        });
       }
-var disableCols = data.editable.disable ? data.editable.disable.columns : null;
-var numericCols = data.editable.numeric;
-var areaCols = data.editable.area;
-      for (var i = 0; i < target.length; i++) {
-        (function(cell, current) {
-          var $cell = $(cell), html = $cell.html();
-          var _cell = table.cell(cell), value = _cell.data(), index = _cell.index().column;
-          var $input;
-          if (inArray(index, numericCols)) {
-            $input = $('<input type="number">');
-          } else if (inArray(index, areaCols)) {
-            $input = $('<textarea></textarea>');
-          } else {
-            $input = $('<input type="text">');
+      
+      // double click to edit the cell
+      table.on('dblclick.dt', 'tbody td', function() {
+        if (table.column(this).header().hasAttribute('data-editortype')) { // cell is marked as editable
+          var $this = $(this), value = table.cell(this).data(), html = $this.html();
+          var changed = false;
+          if (table.column(this).header().getAttribute('data-editortype') == 'text') { // cell shall display a textinput
+            var $input = $('<input type="text">');
+            $input.val(value);
+            $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder);
           }
-          if (!immediate) {
-            $cell.data('input', $input).data('html', html);
-            $input.attr('title', 'Hit Ctrl+Enter to finish editing, or Esc to cancel');
+          else if(table.column(this).header().getAttribute('data-editortype') == 'number'){
+            var $input = $('<input type="number">');
+            $input.val(value);
+            $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
+          } else if (table.column(this).header().getAttribute('data-editortype') == 'select') { // cell shall display a selectinput
+            var $input = $('<select>');
+            $(JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).options).each(function(index, val) {
+              $option = $('<option>').attr('value', val).text(val);
+              if (val == value) $option.attr('selected','selected');
+              $input.append($option);
+            });
           }
-          $input.val(value);
-          if (inArray(_cell.index().column, disableCols)) {
-            $input.attr('readonly', '').css('filter', 'invert(25%)');
-          }
-          $cell.empty().append($input);
-          if (cell === current) $input.focus();
-          $input.css('width', '100%');
-
-          if (immediate) $input.on('change', function() {
+          $this.empty().append($input);
+          $input.css('width', '100%').focus().on('change', function() {
             changed = true;
             var valueNew = $input.val();
             if (valueNew != value) {
-              _cell.data(valueNew);
-              if (HTMLWidgets.shinyMode) {
-                changeInput('cell_edit', [cellInfo(cell)], 'DT.cellInfo', null, {priority: "event"});
-              }
+              table.cell($this).data(valueNew);
+              if (HTMLWidgets.shinyMode) changeInput('cell_edit', cellInfo($this));
               // for server-side processing, users have to call replaceData() to update the table
               if (!server) table.draw(false);
             } else {
-              $cell.html(html);
+              $this.html(html);
             }
             $input.remove();
-          }).on('blur', function(e) {
-            var valueNew = $input.val();
-            if (valueNew != value) {
-              _cell.data(valueNew);
-              if (HTMLWidgets.shinyMode) {
-                changeInput('cell_edit', [cellInfo(cell)], 'DT.cellInfo', null, {priority: 'event'});
+          }).on('blur', function() {
+            if (!changed) $input.trigger('change');
+          }).on('keydown', function(ev) {
+            if (ev.keyCode == 13) { // enter
+              if (!changed) $input.trigger('change');
+            } else if (ev.keyCode == 27) { //escape
+              $this.html(html);
+            } else if (ev.keyCode == 9) { //tab
+            if (!changed) $input.trigger('change');
+              if (ev.shiftKey) {
+                // find previous editable column
+                var column = table.column($this).header();
+                do {
+                  column = column.previousSibling;
+                }
+                while (column !== null && !column.hasAttribute('data-editortype'));
+                if (column === null) { // a editable column was not found before the current column, search after the current column
+                  column = table.column($this).header().parentElement.lastChild;
+                  while (!column.hasAttribute('data-editortype'))
+                    column = column.previousSibling;
+                }
+                var nextColNumber = $(column).parent().children().index(column); // calculate the index of the previous editable column
+  
+                if (nextColNumber < table.cell($this).index().column) { // next column is in same line
+                  ev.preventDefault();
+                  $(table.cell(table.cell($this).index().row, nextColNumber).node()).dblclick(); // activate editor in next cell
+                  if (HTMLWidgets.shinyMode) editorNextCell = [table.cell($this).index().row, nextColNumber]; // save next cell to be clicked after a possible table reload by the server
+                } else { // next column is in the previous row
+                  // find previous row in the current ordering, pagination and search
+                  var rows = table.rows({order: 'current', page: 'current', search: 'applied'}).indexes();
+                  var i = 0;
+                  while (i < rows.length && rows[i] != table.cell($this).index().row)
+                    i++;
+                  if (i > 0) {
+                    ev.preventDefault();
+                    $(table.cell(rows[i-1], nextColNumber).node()).dblclick(); // activate editor in next cell
+                    if (HTMLWidgets.shinyMode) editorNextCell = [rows[i-1], nextColNumber]; // save next cell to be clicked after a possible table reload by the server
+                  }
+                }
+              } else {
+                // find next editable column
+                var column = table.column($this).header();
+                do {
+                  column = column.nextSibling;
+                }
+                while (column !== null && !column.hasAttribute('data-editortype'));
+                if (column === null) { // a editable column was not found after the current column, search before the current column
+                  column = table.column(0).header();
+                  while (!column.hasAttribute('data-editortype'))
+                    column = column.nextSibling;
+                }
+                var nextColNumber = $(column).parent().children().index(column); // calculate the index of the next editable column
+  
+                if (nextColNumber > table.cell($this).index().column) { // next column is in same line
+                  ev.preventDefault();
+                  $(table.cell(table.cell($this).index().row, nextColNumber).node()).dblclick(); // activate editor in next cell
+                  if (HTMLWidgets.shinyMode) editorNextCell = [table.cell($this).index().row, nextColNumber]; // save next cell to be clicked after a possible table reload by the server
+                } else { // next column is in the following row
+                  // find next row in the current ordering, pagination and search
+                  var rows = table.rows({order: 'current', page: 'current', search: 'applied'}).indexes();
+                  var i = 0;
+                  while (i < rows.length && rows[i] != table.cell($this).index().row)
+                    i++;
+                  if (i < (rows.length - 1)) {
+                    ev.preventDefault();
+                    $(table.cell(rows[i+1], nextColNumber).node()).dblclick(); // activate editor in next cell
+                    if (HTMLWidgets.shinyMode) editorNextCell = [rows[i+1], nextColNumber]; // save next cell to be clicked after a possible table reload by the server
+                  }
+                }
               }
-              // for server-side processing, users have to call replaceData() to update the table
-              if (!server) table.draw(false);
-            } else {
-              $cell.html(html);
             }
-          }).on('keyup', function(e) {
-            // hit Escape to cancel editing
-            if (e.keyCode === 27) $input.trigger('blur');
           });
-
-          // bulk edit (row, column, or all)
-          if (!immediate) $input.on('keyup', function(e) {
-            var removeInput = function($cell, restore) {
-              $cell.data('input').remove();
-              if (restore) $cell.html($cell.data('html'));
-            }
-            if (e.keyCode === 27) {
-              for (var i = 0; i < target.length; i++) {
-                removeInput($(target[i]), true);
-              }
-            } else if (e.keyCode === 13 && e.ctrlKey) {
-              // Ctrl + Enter
-              var cell, $cell, _cell, cellData = [];
-              for (var i = 0; i < target.length; i++) {
-                cell = target[i]; $cell = $(cell); _cell = table.cell(cell);
-                _cell.data($cell.data('input').val());
-                HTMLWidgets.shinyMode && cellData.push(cellInfo(cell));
-                removeInput($cell, false);
-              }
-              if (HTMLWidgets.shinyMode) {
-                changeInput('cell_edit', cellData, 'DT.cellInfo', null, {priority: "event"});
-              }
-              if (!server) table.draw(false);
-            }
-          });
-        })(target[i], this);
-      }
-    });
+        }
+      });
+      
+      table.on('draw.dt', function (e, settings) {
+        if (typeof(editorNextCell) !== 'undefined' && editorNextCell !== null) { // table was redrawn due to an edited cell applied by pressing the tab key
+          $(table.cell(editorNextCell[0], editorNextCell[1]).node()).dblclick(); // activate editor in next cell
+          editorNextCell = null;
+        }
+      })  
+    }
 
     // interaction with shiny
     if (!HTMLWidgets.shinyMode && !crosstalkOptions.group) return;
@@ -849,18 +832,18 @@ var areaCols = data.editable.area;
     // register clear functions to remove input values when the table is removed
     instance.clearInputs = {};
 
-    var changeInput = function(id, value, type, noCrosstalk, opts) {
+    var changeInput = function(id, value, type, noCrosstalk) {
       var event = id;
       id = el.id + '_' + id;
       if (type) id = id + ':' + type;
       // do not update if the new value is the same as old value
-      if (event !== 'cell_edit' && !/_clicked$/.test(event) && shinyData.hasOwnProperty(id) && shinyData[id] === JSON.stringify(value))
+      if (shinyData.hasOwnProperty(id) && shinyData[id] === JSON.stringify(value))
         return;
       shinyData[id] = JSON.stringify(value);
-      if (HTMLWidgets.shinyMode && Shiny.setInputValue) {
-        Shiny.setInputValue(id, value, opts);
+      if (HTMLWidgets.shinyMode) {
+        Shiny.onInputChange(id, value);
         if (!instance.clearInputs[id]) instance.clearInputs[id] = function() {
-          Shiny.setInputValue(id, null);
+          Shiny.onInputChange(id, null);
         }
       }
 
@@ -897,12 +880,6 @@ var areaCols = data.editable.area;
     // change the row index of a cell
     var tweakCellIndex = function(cell) {
       var info = cell.index();
-      // some cell may not be valid. e.g, #759
-      // when using the RowGroup extension, datatables will
-      // generate the row label and the cells are not part of
-      // the data thus contain no row/col info
-      if (info === undefined)
-        return {row: null, col: null};
       if (server) {
         info.row = DT_rows_current[info.row];
       } else {
@@ -911,72 +888,21 @@ var areaCols = data.editable.area;
       return {row: info.row, col: info.column};
     }
 
-    var cleanSelectedValues = function() {
-      changeInput('rows_selected', []);
-      changeInput('columns_selected', []);
-      changeInput('cells_selected', transposeArray2D([]), 'shiny.matrix');
-    }
-    // #828 we should clean the selection on the server-side when the table reloads
-    cleanSelectedValues();
-
-    // a flag to indicates if select extension is initialized or not
-    var flagSelectExt = table.settings()[0]._select !== undefined;
-    // the Select extension should only be used in the client mode and
-    // when the selection.mode is set to none
-    if (data.selection.mode === 'none' && !server && flagSelectExt) {
-      var updateRowsSelected = function() {
-        var rows = table.rows({selected: true});
-        var selected = [];
-        $.each(rows.indexes().toArray(), function(i, v) {
-          selected.push(v + 1);
-        });
-        changeInput('rows_selected', selected);
-      }
-      var updateColsSelected = function() {
-        var columns = table.columns({selected: true});
-        changeInput('columns_selected', columns.indexes().toArray());
-      }
-      var updateCellsSelected = function() {
-        var cells = table.cells({selected: true});
-        var selected = [];
-        cells.every(function() {
-          var row = this.index().row;
-          var col = this.index().column;
-          selected = selected.concat([[row + 1, col]]);
-        });
-        changeInput('cells_selected', transposeArray2D(selected), 'shiny.matrix');
-      }
-      table.on('select deselect', function(e, dt, type, indexes) {
-        updateRowsSelected();
-        updateColsSelected();
-        updateCellsSelected();
-      })
-    }
-
     var selMode = data.selection.mode, selTarget = data.selection.target;
-    var selDisable = data.selection.selectable === false;
     if (inArray(selMode, ['single', 'multiple'])) {
-      var selClass = inArray(data.style, ['bootstrap', 'bootstrap4']) ? 'active' : 'selected';
+      var selClass = data.style === 'bootstrap' ? 'active' : 'selected';
+      var selected = data.selection.selected, selected1, selected2;
       // selected1: row indices; selected2: column indices
-      var initSel = function(x) {
-        if (x === null || typeof x === 'boolean' || selTarget === 'cell') {
-          return {rows: [], cols: []};
-        } else if (selTarget === 'row') {
-          return {rows: $.makeArray(x), cols: []};
-        } else if (selTarget === 'column') {
-          return {rows: [], cols: $.makeArray(x)};
-        } else if (selTarget === 'row+column') {
-          return {rows: $.makeArray(x.rows), cols: $.makeArray(x.cols)};
-        }
+      if (selected === null) {
+        selected1 = selected2 = [];
+      } else if (selTarget === 'row') {
+        selected1 = $.makeArray(selected);
+      } else if (selTarget === 'column') {
+        selected2 = $.makeArray(selected);
+      } else if (selTarget === 'row+column') {
+        selected1 = $.makeArray(selected.rows);
+        selected2 = $.makeArray(selected.cols);
       }
-      var selected = data.selection.selected;
-      var selected1 = initSel(selected).rows, selected2 = initSel(selected).cols;
-      // selectable should contain either all positive or all non-positive values, not both
-      // positive values indicate "selectable" while non-positive values means "nonselectable"
-      // the assertion is performed on R side. (only column indicides could be zero which indicates
-      // the row name)
-      var selectable = data.selection.selectable;
-      var selectable1 = initSel(selectable).rows, selectable2 = initSel(selectable).cols;
 
       // After users reorder the rows or filter the table, we cannot use the table index
       // directly. Instead, we need this function to find out the rows between the two clicks.
@@ -999,56 +925,15 @@ var areaCols = data.editable.area;
       // row, column, or cell selection
       var lastClickedRow;
       if (inArray(selTarget, ['row', 'row+column'])) {
-        // Get the current selected rows. It will also
-        // update the selected1's value based on the current row selection state
-        // Note we can't put this function inside selectRows() directly,
-        // the reason is method.selectRows() will override selected1's value but this
-        // function will add rows to selected1 (keep the existing selection), which is
-        // inconsistent with column and cell selection.
         var selectedRows = function() {
           var rows = table.rows('.' + selClass);
           var idx = rows.indexes().toArray();
-          if (!server) {
-            selected1 = addOne(idx);
-            return selected1;
-          }
+          if (!server) return addOne(idx);
           idx = idx.map(function(i) {
             return DT_rows_current[i];
           });
           selected1 = selMode === 'multiple' ? unique(selected1.concat(idx)) : idx;
           return selected1;
-        }
-        // Change selected1's value based on selectable1, then refresh the row state
-        var onlyKeepSelectableRows = function() {
-          if (selDisable) { // users can't select; useful when only want backend select
-            selected1 = [];
-            return;
-          }
-          if (selectable1.length === 0) return;
-          var nonselectable = selectable1[0] <= 0;
-          if (nonselectable) {
-            // should make selectable1 positive
-            selected1 = $(selected1).not(selectable1.map(function(i) { return -i; })).get();
-          } else {
-            selected1 = $(selected1).filter(selectable1).get();
-          }
-        }
-        // Change selected1's value based on selectable1, then
-        // refresh the row selection state according to values in selected1
-        var selectRows = function(ignoreSelectable) {
-          if (!ignoreSelectable) onlyKeepSelectableRows();
-          table.$('tr.' + selClass).removeClass(selClass);
-          if (selected1.length === 0) return;
-          if (server) {
-            table.rows({page: 'current'}).every(function() {
-              if (inArray(DT_rows_current[this.index()], selected1)) {
-                $(this.node()).addClass(selClass);
-              }
-            });
-          } else {
-            var selected0 = selected1.map(function(i) { return i - 1; });
-            $(table.rows(selected0).nodes()).addClass(selClass);
-          }
         }
         table.on('mousedown.dt', 'tbody tr', function(e) {
           var $this = $(this), thisRow = table.row(this);
@@ -1101,21 +986,33 @@ var areaCols = data.editable.area;
             // remove id from selected1 since its class .selected has been removed
             if (inArray(id, selected1)) selected1.splice($.inArray(id, selected1), 1);
           }
-          selectedRows(); // update selected1's value based on selClass
-          selectRows(false); // only keep the selectable rows
-          changeInput('rows_selected', selected1);
-          changeInput('row_last_clicked', serverRowIndex(thisRow.index()), null, null, {priority: 'event'});
+          changeInput('rows_selected', selectedRows());
+          changeInput('row_last_clicked', serverRowIndex(thisRow.index()));
           lastClickedRow = serverRowIndex(thisRow.index());
         });
-        selectRows(false);  // in case users have specified pre-selected rows
+        changeInput('rows_selected', selected1);
+        var selectRows = function() {
+          table.$('tr.' + selClass).removeClass(selClass);
+          if (selected1.length === 0) return;
+          if (server) {
+            table.rows({page: 'current'}).every(function() {
+              if (inArray(DT_rows_current[this.index()], selected1)) {
+                $(this.node()).addClass(selClass);
+              }
+            });
+          } else {
+            var selected0 = selected1.map(function(i) { return i - 1; });
+            $(table.rows(selected0).nodes()).addClass(selClass);
+          }
+        }
+        selectRows();  // in case users have specified pre-selected rows
         // restore selected rows after the table is redrawn (e.g. sort/search/page);
         // client-side tables will preserve the selections automatically; for
         // server-side tables, we have to *real* row indices are in `selected1`
-        changeInput('rows_selected', selected1);
-        if (server) table.on('draw.dt', function(e) { selectRows(false); });
-        methods.selectRows = function(selected, ignoreSelectable) {
-          selected1 = $.makeArray(selected);
-          selectRows(ignoreSelectable);
+        if (server) table.on('draw.dt', selectRows);
+        methods.selectRows = function(selected) {
+          selected1 = selected ? selected : [];
+          selectRows();
           changeInput('rows_selected', selected1);
         }
       }
@@ -1124,35 +1021,7 @@ var areaCols = data.editable.area;
         if (selTarget === 'row+column') {
           $(table.columns().footer()).css('cursor', 'pointer');
         }
-        // update selected2's value based on selectable2
-        var onlyKeepSelectableCols = function() {
-          if (selDisable) { // users can't select; useful when only want backend select
-            selected2 = [];
-            return;
-          }
-          if (selectable2.length === 0) return;
-          var nonselectable = selectable2[0] <= 0;
-          if (nonselectable) {
-            // need to make selectable2 positive
-            selected2 = $(selected2).not(selectable2.map(function(i) { return -i; })).get();
-          } else {
-            selected2 = $(selected2).filter(selectable2).get();
-          }
-        }
-        // update selected2 and then
-        // refresh the col selection state according to values in selected2
-        var selectCols = function(ignoreSelectable) {
-          if (!ignoreSelectable) onlyKeepSelectableCols();
-          // if selected2 is not a valide index (e.g., larger than the column number)
-          // table.columns(selected2) will fail and result in a blank table
-          // this is different from the table.rows(), where the out-of-range indexes
-          // doesn't affect at all
-          selected2 = $(selected2).filter(table.columns().indexes()).get();
-          table.columns().nodes().flatten().to$().removeClass(selClass);
-          if (selected2.length > 0)
-            table.columns(selected2).nodes().flatten().to$().addClass(selClass);
-        }
-        var callback = function() {
+        table.on('click.dt', selTarget === 'column' ? 'tbody td' : 'tfoot tr th', function() {
           var colIdx = selTarget === 'column' ? table.cell(this).index().column :
               $.inArray(this, table.columns().footer()),
               thisCol = $(table.column(colIdx).nodes());
@@ -1165,59 +1034,51 @@ var areaCols = data.editable.area;
             thisCol.addClass(selClass);
             selected2 = selMode === 'single' ? [colIdx] : unique(selected2.concat([colIdx]));
           }
-          selectCols(false); // update selected2 based on selectable
           changeInput('columns_selected', selected2);
-        }
-        if (selTarget === 'column') {
-          $(table.table().body()).on('click.dt', 'td', callback);
-        } else {
-          $(table.table().footer()).on('click.dt', 'tr th', callback);
-        }
-        selectCols(false);  // in case users have specified pre-selected columns
+        });
         changeInput('columns_selected', selected2);
-        if (server) table.on('draw.dt', function(e) { selectCols(false); });
-        methods.selectColumns = function(selected, ignoreSelectable) {
-          selected2 = $.makeArray(selected);
-          selectCols(ignoreSelectable);
+        var selectCols = function() {
+          table.columns().nodes().flatten().to$().removeClass(selClass);
+          if (selected2.length > 0)
+            table.columns(selected2).nodes().flatten().to$().addClass(selClass);
+        }
+        selectCols();  // in case users have specified pre-selected columns
+        if (server) table.on('draw.dt', selectCols);
+        methods.selectColumns = function(selected) {
+          selected2 = selected ? selected : [];
+          selectCols();
           changeInput('columns_selected', selected2);
         }
       }
 
       if (selTarget === 'cell') {
-        var selected3 = [], selectable3 = [];
-        if (selected !== null) selected3 = selected;
-        if (selectable !== null && typeof selectable !== 'boolean') selectable3 = selectable;
-        var findIndex = function(ij, sel) {
-          for (var i = 0; i < sel.length; i++) {
-            if (ij[0] === sel[i][0] && ij[1] === sel[i][1]) return i;
+        var selected3;
+        if (selected === null) {
+          selected3 = [];
+        } else {
+          selected3 = selected;
+        }
+        var findIndex = function(ij) {
+          for (var i = 0; i < selected3.length; i++) {
+            if (ij[0] === selected3[i][0] && ij[1] === selected3[i][1]) return i;
           }
           return -1;
         }
-         // Change selected3's value based on selectable3, then refresh the cell state
-        var onlyKeepSelectableCells = function() {
-          if (selDisable) { // users can't select; useful when only want backend select
-            selected3 = [];
-            return;
-          }
-          if (selectable3.length === 0) return;
-          var nonselectable = selectable3[0][0] <= 0;
-          var out = [];
-          if (nonselectable) {
-            selected3.map(function(ij) {
-              // should make selectable3 positive
-              if (findIndex([-ij[0], -ij[1]], selectable3) === -1) { out.push(ij); }
-            });
+        table.on('click.dt', 'tbody td', function() {
+          var $this = $(this), info = tweakCellIndex(table.cell(this));
+          if ($this.hasClass(selClass)) {
+            $this.removeClass(selClass);
+            selected3.splice(findIndex([info.row, info.col]), 1);
           } else {
-            selected3.map(function(ij) {
-              if (findIndex(ij, selectable3) > -1) { out.push(ij); }
-            });
+            if (selMode === 'single') $(table.cells().nodes()).removeClass(selClass);
+            $this.addClass(selClass);
+            selected3 = selMode === 'single' ? [[info.row, info.col]] :
+              unique(selected3.concat([[info.row, info.col]]));
           }
-          selected3 = out;
-        }
-        // Change selected3's value based on selectable3, then
-        // refresh the cell selection state according to values in selected3
-        var selectCells = function(ignoreSelectable) {
-          if (!ignoreSelectable) onlyKeepSelectableCells();
+          changeInput('cells_selected', transposeArray2D(selected3), 'shiny.matrix');
+        });
+        changeInput('cells_selected', transposeArray2D(selected3), 'shiny.matrix');
+        var selectCells = function() {
           table.$('td.' + selClass).removeClass(selClass);
           if (selected3.length === 0) return;
           if (server) {
@@ -1232,27 +1093,11 @@ var areaCols = data.editable.area;
             });
           }
         };
-        table.on('click.dt', 'tbody td', function() {
-          var $this = $(this), info = tweakCellIndex(table.cell(this));
-          if ($this.hasClass(selClass)) {
-            $this.removeClass(selClass);
-            selected3.splice(findIndex([info.row, info.col], selected3), 1);
-          } else {
-            if (selMode === 'single') $(table.cells().nodes()).removeClass(selClass);
-            $this.addClass(selClass);
-            selected3 = selMode === 'single' ? [[info.row, info.col]] :
-              unique(selected3.concat([[info.row, info.col]]));
-          }
-          selectCells(false); // must call this to update selected3 based on selectable3
-          changeInput('cells_selected', transposeArray2D(selected3), 'shiny.matrix');
-        });
-        selectCells(false);  // in case users have specified pre-selected columns
-        changeInput('cells_selected', transposeArray2D(selected3), 'shiny.matrix');
-
-        if (server) table.on('draw.dt', function(e) { selectCells(false); });
-        methods.selectCells = function(selected, ignoreSelectable) {
+        selectCells();  // in case users have specified pre-selected columns
+        if (server) table.on('draw.dt', selectCells);
+        methods.selectCells = function(selected) {
           selected3 = selected ? selected : [];
-          selectCells(ignoreSelectable);
+          selectCells();
           changeInput('cells_selected', transposeArray2D(selected3), 'shiny.matrix');
         }
       }
@@ -1304,7 +1149,7 @@ var areaCols = data.editable.area;
     }
     // the current cell clicked on
     table.on('click.dt', 'tbody td', function() {
-      changeInput('cell_clicked', cellInfo(this), null, null, {priority: 'event'});
+      changeInput('cell_clicked', cellInfo(this));
     })
     changeInput('cell_clicked', {});
 
@@ -1313,16 +1158,16 @@ var areaCols = data.editable.area;
       if (this.className === '') e.stopPropagation();
     });
 
-    methods.addRow = function(data, rowname, resetPaging) {
-      var n = table.columns().indexes().length, d = n - data.length;
+    methods.addRow = function(data, rowname) {
+      var data0 = table.row(0).data(), n = data0.length, d = n - data.length;
       if (d === 1) {
         data = rowname.concat(data)
       } else if (d !== 0) {
         console.log(data);
-        console.log(table.columns().indexes());
+        console.log(data0);
         throw 'New data must be of the same length as current data (' + n + ')';
       };
-      table.row.add(data).draw(resetPaging);
+      table.row.add(data).draw();
     }
 
     methods.updateSearch = function(keywords) {
@@ -1341,20 +1186,6 @@ var areaCols = data.editable.area;
         searchColumn(i, v);
       });
       table.draw();
-    }
-
-    methods.hideCols = function(hide, reset) {
-      if (reset) table.columns().visible(true, false);
-      table.columns(hide).visible(false);
-    }
-
-    methods.showCols = function(show, reset) {
-      if (reset) table.columns().visible(false, false);
-      table.columns(show).visible(true);
-    }
-
-    methods.colReorder = function(order, origOrder) {
-      table.colReorder.order(order, origOrder);
     }
 
     methods.selectPage = function(page) {

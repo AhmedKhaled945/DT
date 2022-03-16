@@ -716,7 +716,7 @@ HTMLWidgets.widget({
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }
           else if(table.column(this).header().getAttribute('data-editortype') == 'date'){
-            var $input = $('<input type="datetime">');
+            var $input = $('<input type="date">');
             $input.val(value);
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }

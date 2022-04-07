@@ -452,7 +452,8 @@ HTMLWidgets.widget({
           });
           var $spans = $x0.children('span').css({
             'margin-top': '10px',
-            'white-space': 'nowrap'
+            'white-space': 'nowrap',
+            'color': 'black'
           });
           var $span1 = $spans.first(), $span2 = $spans.last();
           var r1 = +$x.data('min'), r2 = +$x.data('max');

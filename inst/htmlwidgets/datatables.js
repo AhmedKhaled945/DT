@@ -717,9 +717,9 @@ HTMLWidgets.widget({
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }
           else if(table.column(this).header().getAttribute('data-editortype') == 'date'){
-            var $input = $('<input type="date"');
+            var $input = $('<input type="date">');
             $input.val(value);
-             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
+            $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }
            else if (table.column(this).header().getAttribute('data-editortype') == 'select') { // cell shall display a selectinput
             var $input = $('<select>');
@@ -729,8 +729,6 @@ HTMLWidgets.widget({
               $input.append($option);
             });
           }
-          
-
           $this.empty().append($input);
           $input.css('width', '100%').focus().on('change', function() {
             changed = true;

@@ -717,7 +717,7 @@ HTMLWidgets.widget({
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }
           else if(table.column(this).header().getAttribute('data-editortype') == 'date'){
-            var $input = $('<input type="date">');
+            var $input = $('<input type="text" class="date1">');
             $input.val(value);
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }
@@ -729,6 +729,8 @@ HTMLWidgets.widget({
               $input.append($option);
             });
           }
+          
+
           $this.empty().append($input);
           $input.css('width', '100%').focus().on('change', function() {
             changed = true;

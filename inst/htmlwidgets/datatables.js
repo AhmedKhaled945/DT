@@ -717,7 +717,7 @@ HTMLWidgets.widget({
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }
           else if(table.column(this).header().getAttribute('data-editortype') == 'date'){
-            var $input = $('<input type="text" class="form-control shinyjs-resettable" title="Date format: dd-MM-yyyy" data-date-language="en" data-date-week-start="0" data-date-format="dd-MM-yyyy" data-date-start-view="month" data-initial-date="" data-date-autoclose="true" data-shinyjs-resettable-type="Date">');
+            var $input = $('<input type="date">');
             $input.val(value);
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
           }

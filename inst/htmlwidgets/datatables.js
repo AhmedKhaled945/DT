@@ -711,6 +711,10 @@ HTMLWidgets.widget({
             $input.val(value);
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder);
           }
+	  else if(table.column(this).header().getAttribute('data-editortype') == 'area'){
+            var $input = $('<textarea></textarea>');
+            $input.val(value);
+          }
           else if(table.column(this).header().getAttribute('data-editortype') == 'number'){
             var $input = $('<input type="number">');
             $input.val(value);

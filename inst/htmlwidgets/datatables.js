@@ -803,7 +803,7 @@ HTMLWidgets.widget({
             var valueNew = $input.val();
             if (valueNew != value) {
               table.cell($this).data(valueNew);
-	      $(table.cell($this).node()).css({'color':'red'})
+	      $(table.cell($this).node()).css({'color':'#cdff7c'})
               if (HTMLWidgets.shinyMode) changeInput('cell_edit', cellInfo($this));
               // for server-side processing, users have to call replaceData() to update the table
               if (!server) table.draw(false);

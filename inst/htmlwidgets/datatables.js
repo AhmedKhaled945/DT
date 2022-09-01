@@ -778,6 +778,10 @@ HTMLWidgets.widget({
 	  else if(table.column(this).header().getAttribute('data-editortype') == 'area'){
             var $input = $('<textarea></textarea>');
             $input.val(value);
+            if(table.column(this).header().getAttribute('mandatory') == 'true'){
+              $input.attr('required', '');
+            }
+            
           }
           else if(table.column(this).header().getAttribute('data-editortype') == 'number'){
             var $input = $('<input type="number">');
@@ -801,7 +805,13 @@ HTMLWidgets.widget({
           $input.css('width', '100%').focus().on('change', function() {
             changed = true;
             var valueNew = $input.val();
-            if (valueNew != value) {
+            if(valueNew == ""){
+              $input.after("<div style=\"color:red;display:block;background-color: transparent;border-color: transparent;border-width: 0px;font-size: smaller;\">Mandatory field, can't be blank.</div>")
+              const button = document.querySelector('#Save');
+              button.disabled = true;
+            }
+	      else{
+          if (valueNew != value) {
               table.cell($this).data(valueNew);
 	      $(table.cell($this).node()).css({'color':'#cdff7c'})
               if (HTMLWidgets.shinyMode) changeInput('cell_edit', cellInfo($this));
@@ -810,7 +820,10 @@ HTMLWidgets.widget({
             } else {
               $this.html(html);
             }
+            const button = document.querySelector('#Save');
+            button.disabled = false;
             $input.remove();
+          }
           }).on('blur', function() {
             if (!changed) $input.trigger('change');
           }).on('keydown', function(ev) {

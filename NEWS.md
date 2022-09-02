@@ -1,3 +1,9 @@
+# CHANGES IN DT VERSION 0.25
+
+## NEW FEATURES
+
+- Server-side filtering is now able to be ran as a `future` via the **promises** package (@andyquinterom, #1011). See the argument `future` on the help page `?DT::renderDataTable` for more info.
+
 # CHANGES IN DT VERSION 0.24
 
 - Fixed a bug with missing numeric values rendered as `0` (thanks, @tverbeke, #1000).

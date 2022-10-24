@@ -769,6 +769,23 @@ HTMLWidgets.widget({
       table.on('dblclick.dt', 'tbody td', function() {
         if (table.column(this).header().hasAttribute('data-editortype')) { // cell is marked as editable
           var $this = $(this), value = table.cell(this).data(), html = $this.html();
+          var raos = [16,19,22,25,28];
+          var rcs = [17,20,23,26,29];
+          var locs = [15];
+          var apis = [14,18,21,24,27];
+          //var apis_straight = [14,18,21,24,27];
+          var apis_reverse = [27, 24, 21, 18, 14, 10];
+          var continue_edit = true;
+          
+          
+          if (raos.indexOf(this.cellIndex) !== -1 || rcs.indexOf(this.cellIndex) !== -1 || apis.indexOf(this.cellIndex) !== -1 || locs.indexOf(this.cellIndex) !== -1){
+            let api_ind = apis_reverse.find(e => e < this.cellIndex);
+            let api_el = this.parentElement.children[api_ind];
+            if (api_el.innerText === 'N/A'){
+             continue_edit = false;
+            }
+          }
+          if (continue_edit){    
           var changed = false;
           if (table.column(this).header().getAttribute('data-editortype') == 'text') { // cell shall display a textinput
             var $input = $('<input type="text">');
@@ -801,6 +818,7 @@ HTMLWidgets.widget({
               $input.append($option);
             });
           }
+          let cur_td = this;
           $this.empty().append($input);
           $input.css('width', '100%').focus().on('change', function() {
             changed = true;
@@ -813,8 +831,78 @@ HTMLWidgets.widget({
 	      else{
           if (valueNew != value) {
               table.cell($this).data(valueNew);
-	      $(table.cell($this).node()).css({'color':'#cdff7c'})
+	            $(table.cell($this).node()).css({'color':'#cdff7c'})
+              // Insert code to trigger changes of subsequent api cols.
+              if(apis.indexOf(cur_td.cellIndex) !== -1){
+                
+                if (valueNew === 'N/A'){
+                  let rao_ind = raos.find(e => e > cur_td.cellIndex);
+                  let rc_ind = rcs.find(e => e > cur_td.cellIndex);
+                  let loc_ind = locs.find(e => e > cur_td.cellIndex);
+                  
+                  let rao_el = cur_td.parentElement.children[rao_ind];
+                  let rc_el = cur_td.parentElement.children[rc_ind];
+                  if (loc_ind !== undefined) 
+                  {
+                    let loc_el = cur_td.parentElement.children[loc_ind];
+                    table.cell(loc_el).data('N/A');
+                    let z = cellInfo(loc_el);
+                    z.value = 'N/A';
+                    if (HTMLWidgets.shinyMode) changeInput('cell_edit_locs', z);
+                    $(loc_el).css({'color':'#cdff7c'});
+                  }
+                  //rao_el.innerText = 'N/A';
+                  //rc_el.innerText = 'N/A';
+                  table.cell(rao_el).data('N/A');
+                  table.cell(rc_el).data('N/A');
+
+                  let x = cellInfo(rao_el);
+                  x.value = 'N/A';
+                  let y = cellInfo(rc_el);
+                  y.value = 'N/A';
+                  
+                  if (HTMLWidgets.shinyMode) changeInput('cell_edit_raos', x);
+                  if (HTMLWidgets.shinyMode) changeInput('cell_edit_rcs', y);
+                  $(rao_el).css({'color':'#cdff7c'});
+                  $(rc_el).css({'color':'#cdff7c'});
+                }
+                else if (value === 'N/A'){
+                  let rao_ind = raos.find(e => e > cur_td.cellIndex);
+                  let rc_ind = rcs.find(e => e > cur_td.cellIndex);
+                  let rao_el = cur_td.parentElement.children[rao_ind];
+                  let rc_el = cur_td.parentElement.children[rc_ind];
+                  let loc_ind = locs.find(e => e > cur_td.cellIndex);
+
+
+                  //rao_el.innerText = 'TBD';
+                  //rc_el.innerText = 'TBD';
+                  table.cell(rao_el).data('TBD');
+                  table.cell(rc_el).data('TBD');
+
+                  let x = cellInfo(rao_el);
+                  x.value = 'TBD';
+                  let y = cellInfo(rc_el);
+                  y.value = 'TBD';
+
+                  if (loc_ind !== undefined) 
+                  {
+                    let loc_el = cur_td.parentElement.children[loc_ind];
+                    //loc_el.innerText = 'TBD';
+                    let z = cellInfo(loc_el);
+                    z.value = 'TBD';
+                    table.cell(loc_el).data('TBD');
+                    if (HTMLWidgets.shinyMode) changeInput('cell_edit_locs', z);
+                    $(loc_el).css({'color':'#cdff7c'});
+                  }
+
+                  if (HTMLWidgets.shinyMode) changeInput('cell_edit_raos', x);
+                  if (HTMLWidgets.shinyMode) changeInput('cell_edit_rcs', y);
+                  $(rao_el).css({'color':'#cdff7c'});
+                  $(rc_el).css({'color':'#cdff7c'});
+                }
+              }
               if (HTMLWidgets.shinyMode) changeInput('cell_edit', cellInfo($this));
+              //if (HTMLWidgets.shinyMode) changeInput('cell_edit', {"row": rc_el.parentElement.rowIndex-1, "col":rc_el.cellIndex , "value":'TBD'});
               // for server-side processing, users have to call replaceData() to update the table
               if (!server) table.draw(false);
             } else {
@@ -897,7 +985,7 @@ HTMLWidgets.widget({
             }
           });
         }
-      });
+    }});
       
       table.on('draw.dt', function (e, settings) {
         if (typeof(editorNextCell) !== 'undefined' && editorNextCell !== null) { // table was redrawn due to an edited cell applied by pressing the tab key

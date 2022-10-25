@@ -845,15 +845,17 @@ HTMLWidgets.widget({
                   if (loc_ind !== undefined) 
                   {
                     let loc_el = cur_td.parentElement.children[loc_ind];
-                    loc_el.innerText = 'N/A';
+                    table.cell(loc_el).data('N/A');
                     let z = cellInfo(loc_el);
                     z.value = 'N/A';
                     if (HTMLWidgets.shinyMode) changeInput('cell_edit_locs', z);
                     $(loc_el).css({'color':'#cdff7c'});
                   }
-                  rao_el.innerText = 'N/A';
-                  rc_el.innerText = 'N/A';
-                  
+                  //rao_el.innerText = 'N/A';
+                  //rc_el.innerText = 'N/A';
+                  table.cell(rao_el).data('N/A');
+                  table.cell(rc_el).data('N/A');
+
                   let x = cellInfo(rao_el);
                   x.value = 'N/A';
                   let y = cellInfo(rc_el);
@@ -872,8 +874,11 @@ HTMLWidgets.widget({
                   let loc_ind = locs.find(e => e > cur_td.cellIndex);
 
 
-                  rao_el.innerText = 'TBD';
-                  rc_el.innerText = 'TBD';
+                  //rao_el.innerText = 'TBD';
+                  //rc_el.innerText = 'TBD';
+                  table.cell(rao_el).data('TBD');
+                  table.cell(rc_el).data('TBD');
+
                   let x = cellInfo(rao_el);
                   x.value = 'TBD';
                   let y = cellInfo(rc_el);
@@ -882,9 +887,10 @@ HTMLWidgets.widget({
                   if (loc_ind !== undefined) 
                   {
                     let loc_el = cur_td.parentElement.children[loc_ind];
-                    loc_el.innerText = 'TBD';
+                    //loc_el.innerText = 'TBD';
                     let z = cellInfo(loc_el);
-                    z.value = 'N/A';
+                    z.value = 'TBD';
+                    table.cell(loc_el).data('TBD');
                     if (HTMLWidgets.shinyMode) changeInput('cell_edit_locs', z);
                     $(loc_el).css({'color':'#cdff7c'});
                   }

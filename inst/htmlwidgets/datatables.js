@@ -756,12 +756,12 @@ HTMLWidgets.widget({
           colIndex = parseInt(key);
           if (table.column(0).header().innerHTML == ' ')
             colIndex = colIndex + 1;
-          $(table.column(colIndex).header()).attr('data-editortype', options.editType[key]).attr('data-editoroptions', JSON.stringify(options.editAttribs[key])); // set column editor attributes
+          $(table.column(colIndex).header()).attr('data-editortype', options.editType[key]).attr('data-editoroptions', JSON.stringify(options.editAttribs[key])).attr('mandatory', JSON.stringify(options.mandatory[key])); // set column editor attributes
         }
       } else {
         table.columns().every(function() {
           if (this.header().innerHTML != ' ')
-            $(this.header()).attr('data-editortype', 'text').attr('data-editoroptions', JSON.stringify({placeholder: this.header().innerHTML})); // set column editor attributes
+            $(this.header()).attr('data-editortype', 'text').attr('data-editoroptions', JSON.stringify({placeholder: this.header().innerHTML})).attr('mandatory', 'false'); // set column editor attributes
         });
       }
       
@@ -770,15 +770,20 @@ HTMLWidgets.widget({
         if (table.column(this).header().hasAttribute('data-editortype')) { // cell is marked as editable
           var $this = $(this), value = table.cell(this).data(), html = $this.html();
           var changed = false;
+          var mandat = table.column(this).header().getAttribute('data-editortype');
+          console.log(mandat);
           if (table.column(this).header().getAttribute('data-editortype') == 'text') { // cell shall display a textinput
             var $input = $('<input type="text">');
             $input.val(value);
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder);
+            if(mandat == 'true'){
+              $input.attr('required', '');
+            }
           }
 	  else if(table.column(this).header().getAttribute('data-editortype') == 'area'){
             var $input = $('<textarea></textarea>');
             $input.val(value);
-            if(table.column(this).header().getAttribute('mandatory') == 'true'){
+            if(mandat == 'true'){
               $input.attr('required', '');
             }
             
@@ -787,11 +792,17 @@ HTMLWidgets.widget({
             var $input = $('<input type="number">');
             $input.val(value);
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
+            if(mandat == 'true'){
+              $input.attr('required', '');
+            }
           }
           else if(table.column(this).header().getAttribute('data-editortype') == 'date'){
             var $input = $('<input type="date">');
             $input.val(value);
             $input.attr('placeholder', JSON.parse(table.column(this).header().getAttribute('data-editoroptions')).placeholder); 
+            if(mandat == 'true'){
+              $input.attr('required', '');
+            }
           }
            else if (table.column(this).header().getAttribute('data-editortype') == 'select') { // cell shall display a selectinput
             var $input = $('<select>');
@@ -799,13 +810,16 @@ HTMLWidgets.widget({
               $option = $('<option>').attr('value', val).text(val);
               if (val == value) $option.attr('selected','selected');
               $input.append($option);
-            });
+            })
+            if(mandat == 'true'){
+              $input.attr('required', '');
+            };
           }
           $this.empty().append($input);
           $input.css('width', '100%').focus().on('change', function() {
             changed = true;
             var valueNew = $input.val();
-            if(valueNew == ""){
+            if(valueNew == "" & mandat == 'true'){
               $input.after("<div style=\"color:red;display:block;background-color: transparent;border-color: transparent;border-width: 0px;font-size: smaller;\">Mandatory field, can't be blank.</div>")
               const button = document.querySelector('#Save');
               button.disabled = true;

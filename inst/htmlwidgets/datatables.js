@@ -841,10 +841,44 @@ HTMLWidgets.widget({
           }).on('blur', function() {
             if (!changed) $input.trigger('change');
           }).on('keydown', function(ev) {
+            //console.log(ev.keyCode);
             if (ev.keyCode == 13) { // enter
               if (!changed) $input.trigger('change');
             } else if (ev.keyCode == 27) { //escape
               $this.html(html);
+            } else if (ev.keyCode == 18){ // alt
+              if (!changed) $input.trigger('change');
+              if(ev.shiftKey){
+                var rows = table.rows({order: 'current', page: 'current', search: 'applied'}).indexes();
+                var i = 0;
+                while (i < rows.length && rows[i] != table.cell($this).index().row)
+                  i++;
+                if (i < (rows.length - 1)) {
+                  ev.preventDefault();
+                  var column = table.column($this).header();  
+                  curColNumber = $(column).parent().children().index(column);
+                  $(table.cell(rows[i-1], curColNumber).node()).dblclick(); // activate editor in next cell
+                  console.log(rows[i+1]);
+                  console.log(table.cell(rows[i+1], curColNumber).node());
+                  if (HTMLWidgets.shinyMode) editorNextCell = [rows[i+1], curColNumber]; // save next cell to be clicked after a possible table reload by the server
+                }
+              }
+              else{
+                // find next row in the current ordering, pagination and search
+                var rows = table.rows({order: 'current', page: 'current', search: 'applied'}).indexes();
+                var i = 0;
+                while (i < rows.length && rows[i] != table.cell($this).index().row)
+                  i++;
+                if (i < (rows.length - 1)) {
+                  ev.preventDefault();
+                  var column = table.column($this).header();  
+                  curColNumber = $(column).parent().children().index(column);
+                  $(table.cell(rows[i+1], curColNumber).node()).dblclick(); // activate editor in next cell
+                  console.log(rows[i+1]);
+                  console.log(table.cell(rows[i+1], curColNumber).node());
+                  if (HTMLWidgets.shinyMode) editorNextCell = [rows[i+1], curColNumber]; // save next cell to be clicked after a possible table reload by the server
+                }
+              }
             } else if (ev.keyCode == 9) { //tab
             if (!changed) $input.trigger('change');
               if (ev.shiftKey) {

@@ -836,35 +836,46 @@ HTMLWidgets.widget({
               if(apis.indexOf(cur_td.cellIndex) !== -1){
                 
                 if (valueNew === 'N/A'){
-                  let rao_ind = raos.find(e => e > cur_td.cellIndex);
-                  let rc_ind = rcs.find(e => e > cur_td.cellIndex);
-                  let loc_ind = locs.find(e => e > cur_td.cellIndex);
-                  
-                  let rao_el = cur_td.parentElement.children[rao_ind];
-                  let rc_el = cur_td.parentElement.children[rc_ind];
-                  if (loc_ind !== undefined) 
-                  {
-                    let loc_el = cur_td.parentElement.children[loc_ind];
-                    table.cell(loc_el).data('N/A');
-                    let z = cellInfo(loc_el);
+                  var arr_changes = [];
+                  for (var i = cur_td.cellIndex; i <= 29; i++) {
+                    let el = cur_td.parentElement.children[i];
+                    table.cell(el).data('N/A');
+                    let z = cellInfo(el);
                     z.value = 'N/A';
-                    if (HTMLWidgets.shinyMode) changeInput('cell_edit_locs', z);
-                    $(loc_el).css({'color':'#cdff7c'});
+                    $(el).css({'color':'#cdff7c'});
+                    arr_changes.push(z);
                   }
+
+                  if (HTMLWidgets.shinyMode) changeInput('cell_edit_sub', arr_changes);
+                  //let rao_ind = raos.find(e => e > cur_td.cellIndex);
+                  //let rc_ind = rcs.find(e => e > cur_td.cellIndex);
+                  //let loc_ind = locs.find(e => e > cur_td.cellIndex);
+                  
+                  //let rao_el = cur_td.parentElement.children[rao_ind];
+                  //let rc_el = cur_td.parentElement.children[rc_ind];
+                  //if (loc_ind !== undefined) 
+                  //{
+                  //  let loc_el = cur_td.parentElement.children[loc_ind];
+                  //  table.cell(loc_el).data('N/A');
+                  //  let z = cellInfo(loc_el);
+                  //  z.value = 'N/A';
+                  //  if (HTMLWidgets.shinyMode) changeInput('cell_edit_locs', z);
+                  //  $(loc_el).css({'color':'#cdff7c'});
+                  //}
                   //rao_el.innerText = 'N/A';
                   //rc_el.innerText = 'N/A';
-                  table.cell(rao_el).data('N/A');
-                  table.cell(rc_el).data('N/A');
+                  //table.cell(rao_el).data('N/A');
+                  //table.cell(rc_el).data('N/A');
 
-                  let x = cellInfo(rao_el);
-                  x.value = 'N/A';
-                  let y = cellInfo(rc_el);
-                  y.value = 'N/A';
+                  //let x = cellInfo(rao_el);
+                  //x.value = 'N/A';
+                  //let y = cellInfo(rc_el);
+                  //y.value = 'N/A';
                   
-                  if (HTMLWidgets.shinyMode) changeInput('cell_edit_raos', x);
-                  if (HTMLWidgets.shinyMode) changeInput('cell_edit_rcs', y);
-                  $(rao_el).css({'color':'#cdff7c'});
-                  $(rc_el).css({'color':'#cdff7c'});
+                  //if (HTMLWidgets.shinyMode) changeInput('cell_edit_raos', x);
+                  //if (HTMLWidgets.shinyMode) changeInput('cell_edit_rcs', y);
+                  //$(rao_el).css({'color':'#cdff7c'});
+                  //$(rc_el).css({'color':'#cdff7c'});
                 }
                 else if (value === 'N/A'){
                   let rao_ind = raos.find(e => e > cur_td.cellIndex);

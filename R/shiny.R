@@ -7,6 +7,8 @@
 #' @inheritParams shiny::dataTableOutput
 #' @param width the width of the table container
 #' @param height the height of the table container
+#' @param fill passed to \code{htmlwidgets::\link{shinyWidgetOutput}()}, see
+#'   there for explanation (requires \pkg{htmlwidgets} > v1.5.4).
 #' @references \url{https://rstudio.github.io/DT/shiny.html}
 #' @export
 #' @examples # !formatR
@@ -22,11 +24,13 @@
 #'     }
 #'   )
 #' }
-dataTableOutput = function(outputId, width = '100%', height = 'auto') {
+dataTableOutput = function(outputId, width = '100%', height = 'auto', fill = TRUE) {
+  args = list(outputId, 'datatables', width, height, package = 'DT')
+  if ("fill" %in% names(formals(htmlwidgets::shinyWidgetOutput)))
+    args$fill = fill
+
   htmltools::attachDependencies(
-    htmlwidgets::shinyWidgetOutput(
-      outputId, 'datatables', width, height, package = 'DT'
-    ),
+    do.call(htmlwidgets::shinyWidgetOutput, args),
     crosstalk::crosstalkLibs(),
     append = TRUE
   )
@@ -524,6 +528,7 @@ getCurrentOutputName = function(session) {
 #' table option \code{ajax} automatically. If you are familiar with
 #' \pkg{DataTables}' server-side processing, and want to use a custom filter
 #' function, you may call this function to get an Ajax URL.
+#' @inheritParams renderDataTable
 #' @param session the \code{session} object in the shiny server function
 #'   (\code{function(input, output, session)})
 #' @param data a data object (will be coerced to a data frame internally)
@@ -543,7 +548,9 @@ getCurrentOutputName = function(session) {
 #' @return A character string (an Ajax URL that can be queried by DataTables).
 #' @example inst/examples/ajax-shiny.R
 #' @export
-dataTableAjax = function(session, data, rownames, filter = dataTablesFilter, outputId) {
+dataTableAjax = function(
+  session, data, rownames, filter = dataTablesFilter, outputId, future = FALSE
+) {
 
   oop = options(stringsAsFactors = FALSE); on.exit(options(oop), add = TRUE)
 

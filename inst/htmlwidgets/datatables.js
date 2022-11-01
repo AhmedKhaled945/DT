@@ -463,7 +463,35 @@ HTMLWidgets.widget({
         if (inArray(type, ['factor', 'logical'])) {
           $input.on({
             click: function() {
-              $input.parent().hide(); $x.show().trigger('show'); filter[0].selectize.focus();
+
+              $input.parent().hide(); 
+              $x.show().trigger('show');
+              
+              col_ind = filter[0].parentElement.parentElement.cellIndex
+              col_name = filter[0].parentElement.parentElement.parentElement.previousElementSibling.children[col_ind].innerText
+
+
+              var new_vals = window.filters_dict_[col_name].map(function(item) {
+                return { text: item, value: item };
+              });
+
+              // Find the selectize object
+              var dropdown = filter[0].selectize;
+
+              
+              // Note the current values
+              var old_vals = dropdown.getValue();
+              console.log(old_vals);
+              // Remove the existing values
+              dropdown.clearOptions();
+
+              // Add the new options
+              dropdown.addOption(new_vals);
+
+              // Preserve the existing values
+              dropdown.setValue(old_vals);
+              
+              filter[0].selectize.focus();
             },
             input: function() {
               if ($input.val() === '') filter[0].selectize.setValue([]);
@@ -1417,6 +1445,11 @@ HTMLWidgets.widget({
     } else {
       console.log("Unknown method " + call.method);
     }
+  });
+
+  Shiny.addCustomMessageHandler('column-filters', function(filters_dict_) {
+    window.filters_dict_ = filters_dict_;
+    console.log(filters_dict_);
   });
 
 })();

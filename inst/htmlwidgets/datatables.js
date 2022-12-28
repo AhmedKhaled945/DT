@@ -68,6 +68,7 @@ DTWidget.formatDate = function(thiz, row, data, col, method, params) {
 };
 
 window.DTWidget = DTWidget;
+window.filters_dicts = {}
 
 // A helper function to update the properties of existing filters
 var setFilterProps = function(td, props) {
@@ -469,9 +470,9 @@ HTMLWidgets.widget({
               
               col_ind = filter[0].parentElement.parentElement.cellIndex
               col_name = filter[0].parentElement.parentElement.parentElement.previousElementSibling.children[col_ind].innerText
+              current_id = $(filter[0].parentNode).closest('.datatables').attr('id');
 
-
-              var new_vals = window.filters_dict_[col_name].map(function(item) {
+              var new_vals = window.filters_dicts[current_id][col_name].map(function(item) {
                 return { text: item, value: item };
               });
 
@@ -1499,7 +1500,9 @@ HTMLWidgets.widget({
   });
 
   Shiny.addCustomMessageHandler('column-filters', function(filters_dict_) {
-    window.filters_dict_ = filters_dict_;
+    id_ = filters_dict_['id']
+    lst = filters_dict_['lst']
+    window.filters_dicts[id_] = lst;
     console.log(filters_dict_);
   });
 

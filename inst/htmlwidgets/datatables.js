@@ -785,12 +785,12 @@ HTMLWidgets.widget({
           colIndex = parseInt(key);
           if (table.column(0).header().innerHTML == ' ')
             colIndex = colIndex + 1;
-          $(table.column(colIndex).header()).attr('data-editortype', options.editType[key]).attr('data-editoroptions', JSON.stringify(options.editAttribs[key])); // set column editor attributes
+          $(table.column(colIndex).header()).attr('data-editortype', options.editType[key]).attr('data-editoroptions', JSON.stringify(options.editAttribs[key])).attr('mandatory', JSON.stringify(options.mandatory[key])); // set column editor attributes
         }
       } else {
         table.columns().every(function() {
           if (this.header().innerHTML != ' ')
-            $(this.header()).attr('data-editortype', 'text').attr('data-editoroptions', JSON.stringify({placeholder: this.header().innerHTML})); // set column editor attributes
+            $(this.header()).attr('data-editortype', 'text').attr('data-editoroptions', JSON.stringify({placeholder: this.header().innerHTML})).attr('mandatory', 'false'); // set column editor attributes
         });
       }
       

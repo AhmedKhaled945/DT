@@ -225,6 +225,17 @@ HTMLWidgets.widget({
 
     // propagate fillContainer to instance (so we have it in resize)
     instance.fillContainer = data.fillContainer;
+    
+    Shiny.addCustomMessageHandler('query-choices', function(choices_dict) {
+      ind = choices_dict['index'];
+      row_ind = choices_dict['row_ind'];
+      value = choices_dict['value'];
+      table = $('#DT table.dataTable').DataTable();
+      //table.cell(1, 35).data('Trial');
+      table.cell(row_ind, 35).data(value);
+      $(table.cell(row_ind, 35).node()).css({'color':'#cdff7c'})
+      changeInput('cell_edit', cellInfo(table.cell(row_ind, 35).node()));
+      });
 
     var cells = data.data;
 
@@ -843,6 +854,15 @@ HTMLWidgets.widget({
               $input.attr('required', '');
             };
           }
+          else if(table.column(this).header().getAttribute('data-editortype') == 'modal_query'){
+            
+            index = $this['0'].parentElement.lastChild.innerText;
+            row_index = $this['0'].parentElement._DT_RowIndex
+            //row_index = $this['0'].parentElement.index;
+            if (HTMLWidgets.shinyMode) changeInput('query_request_category_modal', {"index":index,"value":value, "row":row_index})
+            console.log(index);
+            return;
+          }
           $this.empty().append($input);
           $input.css('width', '100%').focus().on('change', function() {
             changed = true;
@@ -855,7 +875,7 @@ HTMLWidgets.widget({
 	      else{
           if (valueNew != value) {
               table.cell($this).data(valueNew);
-	      $(table.cell($this).node()).css({'color':'#cdff7c'})
+	            $(table.cell($this).node()).css({'color':'#cdff7c'})
               if (HTMLWidgets.shinyMode) changeInput('cell_edit', cellInfo($this));
               // for server-side processing, users have to call replaceData() to update the table
               if (!server) table.draw(false);
@@ -1417,7 +1437,7 @@ HTMLWidgets.widget({
     // set the height
     dtScrollBody.height(scrollBodyHeight + 'px');
   },
-
+  
   // adjust the width of columns; remove the hard-coded widths on table and the
   // scroll header when scrollX/Y are enabled
   adjustWidth: function(el) {
@@ -1425,7 +1445,9 @@ HTMLWidgets.widget({
     if (table) table.columns.adjust();
     $el.find('.dataTables_scrollHeadInner').css('width', '')
         .children('table').css('margin-left', '');
-  }
+  },
+  
+  
 });
 
   if (!HTMLWidgets.shinyMode) return;
@@ -1448,10 +1470,13 @@ HTMLWidgets.widget({
   });
 
   Shiny.addCustomMessageHandler('column-filters', function(filters_dict_) {
-    id_ = filters_dict_['id']
-    lst = filters_dict_['lst']
+    id_ = filters_dict_['id'];
+    lst = filters_dict_['lst'];
     window.filters_dicts[id_] = lst;
     console.log(filters_dict_);
   });
+
+  
+  
 
 })();

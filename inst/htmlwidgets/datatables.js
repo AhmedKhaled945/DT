@@ -1505,5 +1505,14 @@ HTMLWidgets.widget({
     window.filters_dicts[id_] = lst;
     console.log(filters_dict_);
   });
+  Shiny.addCustomMessageHandler('autofill', function(info_dict_) {
+    row_ind = info_dict_['row_ind'];
+    col_ind = info_dict_['col_ind'];
+    val = info_dict_['val'];
+    table = $('#DT table.dataTable').DataTable();
+    tmp = table.cell(row_ind, col_ind);
+    tmp.data(val);
+    $(tmp.node()).css({'color':'#cdff7c'})
 
+  });
 })();

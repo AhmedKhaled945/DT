@@ -805,7 +805,7 @@ HTMLWidgets.widget({
           //var apis_straight = [14,18,21,24,27];
           var apis_reverse = [27, 24, 21, 18, 14, 10];
           var continue_edit = true;
-          
+          window.mandat = false;
           
           if (raos.indexOf(this.cellIndex) !== -1 || rcs.indexOf(this.cellIndex) !== -1 || apis.indexOf(this.cellIndex) !== -1 || locs.indexOf(this.cellIndex) !== -1){
             let api_ind = apis_reverse.find(e => e < this.cellIndex);
@@ -824,8 +824,9 @@ HTMLWidgets.widget({
 	  else if(table.column(this).header().getAttribute('data-editortype') == 'area'){
             var $input = $('<textarea></textarea>');
             $input.val(value);
-            if(table.column(this).header().getAttribute('mandatory') == 'true'){
+            if(table.column(this).header().getAttribute('mandatory') == '"true"'){
               $input.attr('required', '');
+              window.mandat = true;
             }
             
           }
@@ -852,7 +853,7 @@ HTMLWidgets.widget({
           $input.css('width', '100%').focus().on('change', function() {
             changed = true;
             var valueNew = $input.val();
-            if(valueNew == ""){
+            if(valueNew == "" & window.mandat){
               $input.after("<div style=\"color:red;display:block;background-color: transparent;border-color: transparent;border-width: 0px;font-size: smaller;\">Mandatory field, can't be blank.</div>")
               const button = document.querySelector('#Save');
               button.disabled = true;

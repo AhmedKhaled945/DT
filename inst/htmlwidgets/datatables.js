@@ -798,12 +798,12 @@ HTMLWidgets.widget({
       table.on('dblclick.dt', 'tbody td', function() {
         if (table.column(this).header().hasAttribute('data-editortype')) { // cell is marked as editable
           var $this = $(this), value = table.cell(this).data(), html = $this.html();
-          var raos = [16,19,22,25,28];
-          var rcs = [17,20,23,26,29];
-          var locs = [15];
-          var apis = [14,18,21,24,27];
+          var raos = [17,20,23,26,29];
+          var rcs = [18,21,24,27,30];
+          var locs = [16];
+          var apis = [15,19,22,25,28];
           //var apis_straight = [14,18,21,24,27];
-          var apis_reverse = [27, 24, 21, 18, 14, 10];
+          var apis_reverse = [28, 25, 22, 19, 15, 10];
           var continue_edit = true;
           window.mandat = false;
           
@@ -1506,6 +1506,7 @@ HTMLWidgets.widget({
     window.filters_dicts[id_] = lst;
     console.log(filters_dict_);
   });
+
   Shiny.addCustomMessageHandler('autofill', function(info_dict_) {
     row_ind = info_dict_['row_ind'];
     col_ind = info_dict_['col_ind'];

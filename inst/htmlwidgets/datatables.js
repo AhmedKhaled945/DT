@@ -867,7 +867,7 @@ HTMLWidgets.widget({
                 
                 if (valueNew === 'N/A'){
                   var arr_changes = [];
-                  for (var i = cur_td.cellIndex; i <= 29; i++) {
+                  for (var i = cur_td.cellIndex; i <= 30; i++) {
                     let el = cur_td.parentElement.children[i];
                     table.cell(el).data('N/A');
                     let z = cellInfo(el);
@@ -907,7 +907,7 @@ HTMLWidgets.widget({
                   //$(rao_el).css({'color':'#cdff7c'});
                   //$(rc_el).css({'color':'#cdff7c'});
                 }
-                else if (value === 'N/A'){
+                else if (value === 'N/A' || value === ' '){
                   let rao_ind = raos.find(e => e > cur_td.cellIndex);
                   let rc_ind = rcs.find(e => e > cur_td.cellIndex);
                   let rao_el = cur_td.parentElement.children[rao_ind];

@@ -810,7 +810,7 @@ HTMLWidgets.widget({
           if (raos.indexOf(this.cellIndex) !== -1 || rcs.indexOf(this.cellIndex) !== -1 || apis.indexOf(this.cellIndex) !== -1 || locs.indexOf(this.cellIndex) !== -1){
             let api_ind = apis_reverse.find(e => e < this.cellIndex);
             let api_el = this.parentElement.children[api_ind];
-            if (api_el.innerText === 'N/A'){
+            if (api_el.innerText === 'N/A' || api_el.innerText == ''){
              continue_edit = false;
             }
           }

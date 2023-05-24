@@ -1511,10 +1511,15 @@ HTMLWidgets.widget({
     row_ind = info_dict_['row_ind'];
     col_ind = info_dict_['col_ind'];
     val = info_dict_['val'];
+    orig = info_dict_['orig']
     table = $('#DT table.dataTable').DataTable();
     tmp = table.cell(row_ind, col_ind);
     tmp.data(val);
-    $(tmp.node()).css({'color':'#cdff7c'})
-
+    if(orig == 0){
+      $(tmp.node()).css({'color':'#cdff7c'})
+    }
+    else{
+      $(tmp.node()).css({'color':'#ebebeb'})
+    }
   });
 })();

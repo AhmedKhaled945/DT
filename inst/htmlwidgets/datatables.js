@@ -67,6 +67,8 @@ DTWidget.formatDate = function(data, method, params) {
 
 
 window.DTWidget = DTWidget;
+const parser = new DOMParser();
+window.parser = parser;
 window.filters_dicts = {}
 // A helper function to update the properties of existing filters
 var setFilterProps = function(td, props) {
@@ -225,15 +227,14 @@ HTMLWidgets.widget({
     // propagate fillContainer to instance (so we have it in resize)
     instance.fillContainer = data.fillContainer;
     
-    Shiny.addCustomMessageHandler('query-choices', function(choices_dict) {
+    Shiny.addCustomMessageHandler('data-ref', function(choices_dict) {
       ind = choices_dict['index'];
       row_ind = choices_dict['row_ind'];
       value = choices_dict['value'];
       table = $('#DT table.dataTable').DataTable();
-      //table.cell(1, 35).data('Trial');
-      table.cell(row_ind, 35).data(value);
-      $(table.cell(row_ind, 35).node()).css({'color':'#cdff7c'})
-      changeInput('cell_edit', cellInfo(table.cell(row_ind, 35).node()));
+      table.cell(row_ind, 13).data(value);
+      changeInput('cell_edit', cellInfo(table.cell(row_ind, 13).node()));
+      //$(table.cell(row_ind, 13).node()).css({'color':'#cdff7c'})
       });
 
     var cells = data.data;
@@ -853,12 +854,26 @@ HTMLWidgets.widget({
               $input.attr('required', '');
             };
           }
-          else if(table.column(this).header().getAttribute('data-editortype') == 'modal_query'){
+          else if(table.column(this).header().getAttribute('data-editortype') == 'data_ref'){
             
             index = $this['0'].parentElement.lastChild.innerText;
             row_index = $this['0'].parentElement._DT_RowIndex
-            //row_index = $this['0'].parentElement.index;
-            if (HTMLWidgets.shinyMode) changeInput('query_request_category_modal', {"index":index,"value":value, "row":row_index})
+            
+            if(Array.isArray(value)){
+              value = value[0];
+            }
+            
+            if(value.includes('<a href')){
+              a_el = window.parser.parseFromString(value, 'text/html');
+              value_text = a_el.body.firstChild.text
+              value_url = a_el.body.firstChild.href
+            }
+            else{
+              value_text = value
+              value_url = ''
+            }
+            
+            if (HTMLWidgets.shinyMode) changeInput('data_ref_modal', {"index":index,"value":value, "row":row_index,"text":value_text,"url":value_url})
             console.log(index);
             return;
           }

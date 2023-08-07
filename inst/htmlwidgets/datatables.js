@@ -69,7 +69,8 @@ DTWidget.formatDate = function(data, method, params) {
 window.DTWidget = DTWidget;
 const parser = new DOMParser();
 window.parser = parser;
-window.filters_dicts = {}
+window.filters_dicts = {};
+window.data_ref_counter = 0;
 // A helper function to update the properties of existing filters
 var setFilterProps = function(td, props) {
   // Update enabled/disabled state
@@ -230,10 +231,11 @@ HTMLWidgets.widget({
     Shiny.addCustomMessageHandler('data-ref', function(choices_dict) {
       ind = choices_dict['index'];
       row_ind = choices_dict['row_ind'];
+      col_ind = choices_dict['col_ind'];
       value = choices_dict['value'];
       table = $('#DT table.dataTable').DataTable();
-      table.cell(row_ind, 13).data(value);
-      changeInput('cell_edit', cellInfo(table.cell(row_ind, 13).node()));
+      table.cell(row_ind, col_ind).data(value);
+      changeInput('cell_edit', cellInfo(table.cell(row_ind, col_ind).node()));
       //$(table.cell(row_ind, 13).node()).css({'color':'#cdff7c'})
       });
 
@@ -855,14 +857,15 @@ HTMLWidgets.widget({
             };
           }
           else if(table.column(this).header().getAttribute('data-editortype') == 'data_ref'){
-            
+            //console.log($this['0'].parentElement);
             index = $this['0'].parentElement.lastChild.innerText;
+            col_ind = table.column(this).index()
             row_index = $this['0'].parentElement._DT_RowIndex
-            
+            if(col_ind == 17){
             if(Array.isArray(value)){
               value = value[0];
             }
-            
+
             if(value.includes('<a href')){
               a_el = window.parser.parseFromString(value, 'text/html');
               value_text = a_el.body.firstChild.text
@@ -872,9 +875,20 @@ HTMLWidgets.widget({
               value_text = value
               value_url = ''
             }
-            
-            if (HTMLWidgets.shinyMode) changeInput('data_ref_modal', {"index":index,"value":value, "row":row_index,"text":value_text,"url":value_url})
-            console.log(index);
+          }
+            else if(col_ind == 9){
+              if(value.includes('<a href')){
+                a_el = window.parser.parseFromString(value, 'text/html');
+                value_url = a_el.body.firstChild.href;
+                value_text = 'Link';
+              }
+              else{
+                value_url = ''
+                value_text = 'Link'
+              }
+            }
+            if (HTMLWidgets.shinyMode) changeInput('data_ref_modal', {"counter":window.data_ref_counter,"index":index,"value":value, "row":row_index,"col":col_ind, "text":value_text,"url":value_url})
+            window.data_ref_counter = window.data_ref_counter + 1;
             return;
           }
           $this.empty().append($input);

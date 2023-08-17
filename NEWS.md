@@ -26,7 +26,12 @@
 
 - Support Bootstrap 5 with `datatable(style = "auto")` (thanks, @gadenbuie, #1074).
 
+<<<<<<< HEAD
 >>>>>>> d779c1e (Support Bootstrap 5 with `datatable(style = "auto")` (#1074))
+=======
+- Fixed a bug that searching would fail when the keyword contains special characters such as `&` (thanks, @dfriend21 @olivier7121, #1075).
+
+>>>>>>> fa31cd2 (fix #1075: decode the search keyword before performing the search)
 # CHANGES IN DT VERSION 0.28
 
 - Upgraded DataTables to v1.13.4 (thanks, @stla, #1063).

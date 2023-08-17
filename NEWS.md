@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+# CHANGES IN DT VERSION 0.29
+
+- Support Bootstrap 5 with `datatable(style = "auto")` (thanks, @gadenbuie, #1074).
+
+>>>>>>> d779c1e (Support Bootstrap 5 with `datatable(style = "auto")` (#1074))
 # CHANGES IN DT VERSION 0.28
 
 - Upgraded DataTables to v1.13.4 (thanks, @stla, #1063).

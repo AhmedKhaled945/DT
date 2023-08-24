@@ -861,7 +861,7 @@ HTMLWidgets.widget({
             index = $this['0'].parentElement.lastChild.innerText;
             col_ind = table.column(this).index()
             row_index = $this['0'].parentElement._DT_RowIndex
-            if(col_ind == 17){
+            if(col_ind == 13){
             if(Array.isArray(value)){
               value = value[0];
             }
@@ -876,7 +876,7 @@ HTMLWidgets.widget({
               value_url = ''
             }
           }
-            else if(col_ind == 9){
+            else if(col_ind == 21){
               if(value.includes('<a href')){
                 a_el = window.parser.parseFromString(value, 'text/html');
                 value_url = a_el.body.firstChild.href;

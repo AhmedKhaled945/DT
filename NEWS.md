@@ -1,7 +1,14 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
+=======
+# CHANGES IN DT VERSION 0.31
+
+- Upgraded DataTables version to 1.13.6 (thanks, @stla, #1091).
+
+>>>>>>> bccddb8 (upgrade DataTables to 1.13.6 (#1091))
 # CHANGES IN DT VERSION 0.30
 
 - Fixed a bug that when using `updateSearch()`, the clear button inside the input box doesn't show up, and the table doesn't update when the input is cleared (thanks, @DavidBlairs, #1082).

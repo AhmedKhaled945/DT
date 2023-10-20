@@ -236,7 +236,7 @@ HTMLWidgets.widget({
       table = $('#DT table.dataTable').DataTable();
       table.cell(row_ind, col_ind).data(value);
       changeInput('cell_edit', cellInfo(table.cell(row_ind, col_ind).node()));
-      //$(table.cell(row_ind, 13).node()).css({'color':'#2b01be'})
+      //$(table.cell(row_ind, 13).node()).css({'color':'#2b01be','font-weight':'bold'})
       });
 
     var cells = data.data;
@@ -903,7 +903,7 @@ HTMLWidgets.widget({
 	      else{
           if (valueNew != value) {
               table.cell($this).data(valueNew);
-	            $(table.cell($this).node()).css({'color':'#2b01be'})
+	            $(table.cell($this).node()).css({'color':'#2b01be','font-weight':'bold'})
               if (HTMLWidgets.shinyMode) changeInput('cell_edit', cellInfo($this));
               // for server-side processing, users have to call replaceData() to update the table
               if (!server) table.draw(false);

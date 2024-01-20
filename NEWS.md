@@ -1,3 +1,47 @@
+# CHANGES IN DT VERSION 0.32
+
+- Fixed the bug that `replaceData()` failed to work with data that has no column names (thanks, @mmuurr, #1108).
+
+- `updateSearch()` now sets the slider values based on the new search string for numeric columns (thanks, @mikmart, #1110).
+
+- Added server-side processing support for the [SearchBuilder](https://datatables.net/extensions/searchbuilder/) extension (thanks, @AhmedKhaled945, @shrektan, @mikmart, #963).
+
+# CHANGES IN DT VERSION 0.31
+
+- Upgraded DataTables version to 1.13.6 (thanks, @stla, #1091).
+
+- Searching and sorting work now when columns are re-ordered by the `ColReorder` extension (thanks, @ashbaldry #1096, @gergness #534, @nmoraesmunter #921, @isthisthat #1069).
+
+- Fixed disabling selection on hyperlink clicks (thanks, @guoci, #1093).
+
+- Fixed an error for R >= 4.3.0 (thanks, @AntoineMichelet, #1095).
+
+# CHANGES IN DT VERSION 0.30
+
+- Fixed a bug that when using `updateSearch()`, the clear button inside the input box doesn't show up, and the table doesn't update when the input is cleared (thanks, @DavidBlairs, #1082).
+
+- Added support for a list of Booleans as input to the `class` argument of `DT::datatable()` when `style = 'bootstrap'` (thanks, @pedropark99, #1089). In other words, you can now select the Bootstrap classes you want to use at `DT::datatable()` by using a list of Booleans that select the classes you want to use. In the example below, we are producing an HTML table that uses the `stripe` and `hover` Bootstrap classes:
+
+    ```r
+    DT::datatable(mtcars, class = list(stripe = TRUE, compact = FALSE, hover = TRUE), style = "bootstrap")
+    ```
+
+- Handle `NULL` return from `bslib::theme_version()` (thanks, @slodge-work, #1090).
+
+# CHANGES IN DT VERSION 0.29
+
+- Support Bootstrap 5 with `datatable(style = "auto")` (thanks, @gadenbuie, #1074).
+
+- Fixed a bug that searching would fail when the keyword contains special characters such as `&` (thanks, @dfriend21 @olivier7121, #1075).
+
+- Deleted `()` after `eval` in a JS *comment* to prevent Google from treating it as malware, which is just a false alarm (thanks, @gorkang, #1080).
+
+# CHANGES IN DT VERSION 0.28
+
+- Upgraded DataTables to v1.13.4 (thanks, @stla, #1063).
+
+- It is now possible to edit date columns with the help of calendar inputs (thanks, @stla, #1064).
+
 # CHANGES IN DT VERSION 0.27
 
 - `dataTableOutput()` gains a new `fill` parameter. When `TRUE` (the default), the widget's container element is allowed to grow/shrink to fit it's parent container so long as that parent is opinionated about its height and has been marked with `htmltools::bindFillRole(x, container = TRUE)`. (#2198)

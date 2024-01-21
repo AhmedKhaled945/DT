@@ -518,10 +518,7 @@ HTMLWidgets.widget({
               table.draw();  // redraw table, and filters will be applied
             }
           });
-          if (searchCol) filter[0].selectize.setValue(JSON.parse(searchCol));
-          // an ugly hack to deal with shiny: for some reason, the onBlur event
-          // of selectize does not work in shiny
-          $x.find('div > div.selectize-input > input').on('blur', function() {
+          filter[0].selectize.on('blur', function() {
             $x.hide().trigger('hide'); $input.parent().show(); $input.trigger('blur');
           });
           filter.next('div').css('margin-bottom', 'auto');
@@ -685,7 +682,7 @@ HTMLWidgets.widget({
         // processing
         if (server) {
           // if a search string has been pre-set, search now
-          if (searchCol) searchColumn(i, searchCol).draw();
+          if (searchCol) $input.trigger('input').trigger('change');
           return;
         }
 
@@ -724,15 +721,7 @@ HTMLWidgets.widget({
         $.fn.dataTable.ext.search.push(customFilter);
 
         // search for the preset search strings if it is non-empty
-        if (searchCol) {
-          if (inArray(type, ['factor', 'logical'])) {
-            filter[0].selectize.setValue(JSON.parse(searchCol));
-          } else if (type === 'character') {
-            $input.trigger('input');
-          } else if (inArray(type, ['number', 'integer', 'date', 'time'])) {
-            $input.trigger('change');
-          }
-        }
+        if (searchCol) $input.trigger('input').trigger('change');
 
       });
 

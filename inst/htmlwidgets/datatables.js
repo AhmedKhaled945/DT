@@ -434,6 +434,7 @@ HTMLWidgets.widget({
     };
 
     if (data.filter !== 'none') {
+      if (!data.hasOwnProperty('filterSettings')) data.filterSettings = {};
 
       filterRow.each(function(i, td) {
 
@@ -507,7 +508,7 @@ HTMLWidgets.widget({
             }
           });
           var $input2 = $x.children('select');
-          filter = $input2.selectize({
+          filter = $input2.selectize($.extend({
             options: $input2.data('options').map(function(v, i) {
               return ({text: v, value: v});
             }),
@@ -526,7 +527,7 @@ HTMLWidgets.widget({
               $td.data('filter', value.length > 0);
               table.draw();  // redraw table, and filters will be applied
             }
-          });
+          }, data.filterSettings.select));
           filter[0].selectize.on('blur', function() {
             $x.hide().trigger('hide'); $input.parent().show(); $input.trigger('blur');
           });
@@ -640,7 +641,7 @@ HTMLWidgets.widget({
             start: [r1, r2],
             range: {min: r1, max: r2},
             connect: true
-          }, opts));
+          }, opts, data.filterSettings.slider));
           if (scale > 1) (function() {
             var t1 = r1, t2 = r2;
             var val = filter.val();
@@ -655,7 +656,7 @@ HTMLWidgets.widget({
                 start: [t1, t2],
                 range: {min: t1, max: t2},
                 connect: true
-              }, opts), true);
+              }, opts, data.filterSettings.slider), true);
               val = filter.val();
             }
             r1  = t1; r2 = t2;
